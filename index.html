@@ -385,6 +385,63 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Admin tabs */
+  .admin-tab-btn {
+    font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px;
+    background: none; color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .admin-tab-btn.active { background: var(--accent-glow); color: var(--accent-light); border-color: rgba(42,127,255,0.3); }
+  .admin-tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* Question editor */
+  .q-admin-cat { margin-bottom: 20px; }
+  .q-admin-cat-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+    cursor: pointer; border: 1px solid var(--border);
+  }
+  .q-admin-cat-name { color: var(--accent-light); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .q-admin-cat-toggle { color: var(--muted); font-size: 14px; }
+  .q-admin-q {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 6px;
+  }
+  .q-admin-q-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .q-admin-q-label { color: var(--text); font-size: 13px; font-weight: 600; flex: 1; }
+  .q-admin-q-actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .btn-q-edit { background: none; border: 1px solid var(--border); color: var(--accent-light); border-radius: 5px; padding: 3px 10px; cursor: pointer; font-size: 11px; font-family: var(--font-body); }
+  .btn-q-edit:hover { background: var(--accent-glow); }
+  .btn-q-archive { background: none; border: 1px solid var(--border); color: var(--amber); border-radius: 5px; padding: 3px 10px; cursor: pointer; font-size: 11px; font-family: var(--font-body); }
+  .btn-q-archive:hover { background: rgba(245,166,35,0.08); }
+  .q-admin-weight { color: var(--muted); font-size: 11px; font-family: var(--font-mono); margin-top: 3px; }
+  .q-admin-options { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .q-admin-opt { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+  .q-admin-opt-v { font-family: var(--font-mono); color: var(--accent-light); width: 20px; flex-shrink: 0; }
+  .q-admin-opt-pts { font-family: var(--font-mono); color: var(--green); width: 35px; flex-shrink: 0; }
+
+  /* Question edit form */
+  .q-edit-form { margin-top: 10px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 8px; padding: 14px; display: none; }
+  .q-edit-form.open { display: block; }
+  .q-edit-row { margin-bottom: 10px; }
+  .q-edit-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 4px; }
+  .q-edit-row input, .q-edit-row textarea { font-size: 13px; }
+  .q-edit-opts { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .q-edit-opt-row { display: flex; gap: 6px; align-items: center; }
+  .q-edit-opt-row input[type="text"] { flex: 1; }
+  .q-edit-opt-row input[type="number"] { width: 70px; }
+  .q-edit-opt-row .lbl { color: var(--muted); font-size: 11px; font-family: var(--font-mono); white-space: nowrap; }
+  .btn-add-opt { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px; width: 100%; margin-bottom: 8px; }
+  .btn-add-opt:hover { border-color: var(--accent); color: var(--accent-light); }
+  .btn-rm-opt { background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
+  .btn-save-q { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 8px 20px; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 13px; }
+  .btn-save-q:hover { background: #1a6fe8; }
+  .btn-cancel-q { background: var(--card); color: var(--muted); border: none; border-radius: 7px; padding: 8px 16px; cursor: pointer; font-family: var(--font-body); font-size: 13px; }
+  .btn-add-question { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 7px; padding: 7px 14px; cursor: pointer; font-size: 12px; width: 100%; margin-top: 4px; }
+  .btn-add-question:hover { border-color: var(--accent); color: var(--accent-light); }
+  .btn-add-section { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-size: 12px; width: 100%; margin-bottom: 14px; }
+  .btn-add-section:hover { border-color: var(--green); color: var(--green); }
+
   .no-review-state { color: var(--muted); text-align: center; padding: 60px; font-size: 14px; }
 
   /* Edit/delete buttons on review checkboxes */
@@ -538,6 +595,11 @@
     </div>
     <!-- Management screen -->
     <div id="admin-mgmt-screen" style="display:none">
+      <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <button class="admin-tab-btn active" id="atab-clients" onclick="showAdminTab('clients')">Clients</button>
+        <button class="admin-tab-btn" id="atab-questions" onclick="showAdminTab('questions')">Questions</button>
+      </div>
+      <div id="admin-tab-clients">
       <div class="add-client-form">
         <div class="add-client-label">Add New Client</div>
         <div class="add-client-row">
@@ -550,9 +612,18 @@
       <div id="client-list-container">
         <div class="loading-state"><span class="spinner"></span>Loading...</div>
       </div>
-    </div>
-  </div>
-</div>
+      </div><!-- end admin-tab-clients -->
+
+      <!-- Questions tab -->
+      <div id="admin-tab-questions" style="display:none">
+        <div id="questions-admin-container">
+          <div class="loading-state"><span class="spinner"></span>Loading questions...</div>
+        </div>
+      </div>
+
+    </div><!-- end admin-mgmt-screen -->
+  </div><!-- end modal -->
+</div><!-- end modal-overlay -->
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -560,19 +631,22 @@ const AIRTABLE_TOKEN = "patJhKzYQqtyi7UXU.306af9969fc810378141172b95ed6a985255e6
 const BASE_ID = "appYG0HSIPBToJUK9";
 const CLIENTS_TABLE = "tblk3DZmZRQXbu34A";
 const SCORES_TABLE = "tblVQ2ehdSXLFhUZV";
+const QUESTIONS_TABLE = "tblET3GEtKT8pfiBW";
 const ADMIN_PASSWORD = "cognigy2026";
 
 // ── QUESTION DATA ─────────────────────────────────────────────────────────────
-const QUESTIONS = {
-  "Business Case": { code: "BC", questions: [
-    { id:"BC1", label:"BC1 — Key Performance Indicators", weight:0.3, options:[
+// ── QUESTION SCHEMA (loaded dynamically from Airtable) ───────────────────────
+// These are the seed questions used to populate Airtable on first run
+const SEED_QUESTIONS = {
+  "Business Case": { code: "BC", catOrder: 1, questions: [
+    { id:"BC1", label:"BC1 — Key Performance Indicators", weight:0.3, order:1, options:[
       {v:1,pts:0,label:"Unable to generate or prove KPIs"},
       {v:2,pts:5,label:"KPIs are below expectation with no plan to improve"},
       {v:3,pts:50,label:"KPIs are below expectation but improving"},
       {v:4,pts:90,label:"KPIs meet client expectation"},
       {v:5,pts:100,label:"All KPIs routinely meet and exceed client expectations"}
     ]},
-    { id:"BC2", label:"BC2 — Return on Investment", weight:0.7, options:[
+    { id:"BC2", label:"BC2 — Return on Investment", weight:0.7, order:2, options:[
       {v:1,pts:0,label:"ROI is negative or no business case available"},
       {v:2,pts:10,label:"ROI is significantly below expected levels"},
       {v:3,pts:50,label:"ROI is below expected levels but improving"},
@@ -580,57 +654,57 @@ const QUESTIONS = {
       {v:5,pts:100,label:"ROI exceeds 3:1 and the client is aware"}
     ]}
   ]},
-  "Journey Volumes": { code: "Vol", questions: [
-    { id:"V1", label:"V1 — Customer Volumes (Annualised)", weight:0.45, options:[
+  "Journey Volumes": { code: "Vol", catOrder: 2, questions: [
+    { id:"V1", label:"V1 — Customer Volumes (Annualised)", weight:0.45, order:1, options:[
       {v:1,pts:0,label:"Customer run-rate is 50% below expected"},
       {v:2,pts:50,label:"Customer run-rate is 25% below expected"},
       {v:3,pts:70,label:"Customer run-rate is 10% below expected"},
       {v:4,pts:90,label:"Customer run-rate is within 2% of expected"},
       {v:5,pts:100,label:"Customer run-rate exceeds expectation"}
     ]},
-    { id:"V2", label:"V2 — New Journeys", weight:0.25, options:[
+    { id:"V2", label:"V2 — New Journeys", weight:0.25, order:2, options:[
       {v:1,pts:50,label:"Happy with current provision, no aspiration for new journeys"},
       {v:2,pts:50,label:"Journey numbers have stayed the same"},
       {v:3,pts:60,label:"Journeys increased by x1.25 in last 12 months"},
       {v:4,pts:80,label:"Journeys increased by x1.5 in last 12 months"},
       {v:5,pts:100,label:"Journeys increased by greater than x2 in last 12 months"}
     ]},
-    { id:"V3", label:"V3 — Business Units Engaged", weight:0.3, options:[
+    { id:"V3", label:"V3 — Business Units Engaged", weight:0.3, order:3, options:[
       {v:1,pts:0,label:"No additional business areas engaged in last 12 months"},
       {v:2,pts:25,label:"Other business areas engaged but no further work"},
       {v:3,pts:90,label:"1 new business unit in last 12 months with view to further work"},
       {v:4,pts:100,label:"2 new business units in last 12 months with view to further work"}
     ]}
   ]},
-  "Engagement": { code: "Eng", questions: [
-    { id:"E1", label:"E1 — Stakeholder Relationships", weight:0.2, options:[
+  "Engagement": { code: "Eng", catOrder: 3, questions: [
+    { id:"E1", label:"E1 — Stakeholder Relationships", weight:0.2, order:1, options:[
       {v:1,pts:0,label:"No positive relationships exist within the client team"},
       {v:2,pts:25,label:"Relationships only with the operations team"},
       {v:3,pts:50,label:"Relationships to manager level"},
       {v:4,pts:90,label:"Relationships to Director/VP level"},
       {v:5,pts:100,label:"Fully mapped to all stakeholders up to SVP and Board"}
     ]},
-    { id:"E2", label:"E2 — Executive Sponsorship", weight:0.15, options:[
+    { id:"E2", label:"E2 — Executive Sponsorship", weight:0.15, order:2, options:[
       {v:1,pts:0,label:"There is no Exec sponsor in place"},
       {v:2,pts:25,label:"The Exec sponsor has met their counterpart"},
       {v:3,pts:50,label:"The Exec sponsor has an ad-hoc relationship with their counterpart"},
       {v:4,pts:90,label:"The Exec sponsor has a calendarised annual meeting"},
       {v:5,pts:100,label:"Scheduled quarterly meetings between Exec Sponsor and counterpart"}
     ]},
-    { id:"E3", label:"E3 — EBRs and Workshops", weight:0.4, options:[
+    { id:"E3", label:"E3 — EBRs and Workshops", weight:0.4, order:3, options:[
       {v:1,pts:0,label:"No EBRs or Workshops have taken place"},
       {v:2,pts:25,label:"Executive Reviews have taken place and further are booked"},
       {v:3,pts:50,label:"1-2 in-person EBRs planned or taken place in the last 12 months"},
       {v:4,pts:90,label:"3-4 virtual EBRs or 1-2 in-person EBRs and 2 workshops in last 12 months"},
       {v:5,pts:100,label:"In-person EBRs scheduled quarterly plus multiple in-person workshops"}
     ]},
-    { id:"E4", label:"E4 — Conferences and Events", weight:0.05, options:[
+    { id:"E4", label:"E4 — Conferences and Events", weight:0.05, order:4, options:[
       {v:1,pts:0,label:"Client has not attended any conferences or events"},
       {v:2,pts:50,label:"Client attended virtual conferences or events"},
       {v:3,pts:100,label:"Client attended in-person conferences or events"},
       {v:4,pts:100,label:"Client has invited us to a conference"}
     ]},
-    { id:"E5", label:"E5 — Enablement", weight:0.2, options:[
+    { id:"E5", label:"E5 — Enablement", weight:0.2, order:5, options:[
       {v:1,pts:0,label:"Client has no aspiration to self-serve"},
       {v:2,pts:10,label:"Client expressed interest in self-serve but has not yet acted"},
       {v:3,pts:40,label:"Client using help centre"},
@@ -638,21 +712,21 @@ const QUESTIONS = {
       {v:5,pts:90,label:"Client doing some config / publishing own config"}
     ]}
   ]},
-  "Advocacy": { code: "Adv", questions: [
-    { id:"A1", label:"A1 — Case Studies", weight:0.2, options:[
+  "Advocacy": { code: "Adv", catOrder: 4, questions: [
+    { id:"A1", label:"A1 — Case Studies", weight:0.2, order:1, options:[
       {v:1,pts:0,label:"No case study exists"},
       {v:2,pts:50,label:"A private case study exists"},
       {v:3,pts:75,label:"Published case study exists but older than 4 years"},
       {v:4,pts:100,label:"Published case study within the last 4 years"}
     ]},
-    { id:"A2", label:"A2 — Referee Credentials", weight:0.6, options:[
+    { id:"A2", label:"A2 — Referee Credentials", weight:0.6, order:2, options:[
       {v:1,pts:0,label:"Client is a detractor"},
       {v:2,pts:70,label:"Client is happy but not yet a referee"},
       {v:3,pts:80,label:"Exec willing to speak to prospects as a reference"},
       {v:4,pts:90,label:"Client has spoken to prospects as a reference"},
       {v:5,pts:100,label:"Exec has spoken to prospects as a reference"}
     ]},
-    { id:"A3", label:"A3 — Advocacy", weight:0.2, options:[
+    { id:"A3", label:"A3 — Advocacy", weight:0.2, order:3, options:[
       {v:1,pts:0,label:"Client is a detractor"},
       {v:2,pts:50,label:"Customer is happy but unable to act as an advocate"},
       {v:3,pts:80,label:"Client is willing to speak at an event"},
@@ -660,14 +734,14 @@ const QUESTIONS = {
       {v:5,pts:100,label:"Exec from the client has spoken at a public event"}
     ]}
   ]},
-  "Differentiators": { code: "Diff", questions: [
-    { id:"D1", label:"D1 — Differentiators", weight:0.5, options:[
+  "Differentiators": { code: "Diff", catOrder: 5, questions: [
+    { id:"D1", label:"D1 — Differentiators", weight:0.5, order:1, options:[
       {v:1,pts:0,label:"Client has fewer than 3 differentiators in their journeys"},
       {v:2,pts:50,label:"Client has 3-4 of the 10 differentiators in at least 1 journey"},
       {v:3,pts:75,label:"Client has 5-7 of the 10 differentiators in 2-4 journeys"},
       {v:4,pts:100,label:"Client has 8-10 differentiators in majority/all journeys"}
     ]},
-    { id:"D2", label:"D2 — Maturity Model", weight:0.5, options:[
+    { id:"D2", label:"D2 — Maturity Model", weight:0.5, order:2, options:[
       {v:1,pts:0,label:"Client has no understanding of their maturity state"},
       {v:2,pts:25,label:"Client understands what a fully mature implementation looks like"},
       {v:3,pts:50,label:"Client understands maturity and is actively moving towards it"},
@@ -675,34 +749,34 @@ const QUESTIONS = {
       {v:5,pts:100,label:"Client's implementation uses all appropriate functionality available"}
     ]}
   ]},
-  "Technical Health": { code: "TH", questions: [
-    { id:"TH1", label:"TH1 — PCRs Raised", weight:0.05, options:[
+  "Technical Health": { code: "TH", catOrder: 6, questions: [
+    { id:"TH1", label:"TH1 — PCRs Raised", weight:0.05, order:1, options:[
       {v:1,pts:0,label:"No additional functionality requested in previous 12 months"},
       {v:2,pts:50,label:"1 PCR requested in the previous 12 months"},
       {v:3,pts:75,label:"2-3 PCRs requested in the previous 12 months"},
       {v:4,pts:100,label:"4+ PCRs requested in the previous 12 months"}
     ]},
-    { id:"TH2", label:"TH2 — Projects Delivered", weight:0.1, options:[
+    { id:"TH2", label:"TH2 — Projects Delivered", weight:0.1, order:2, options:[
       {v:1,pts:0,label:"Average of less than 1 significant change per month"},
       {v:2,pts:60,label:"Average of 1 significant change per month"},
       {v:3,pts:80,label:"Average of 2 significant changes per month"},
       {v:4,pts:90,label:"Average of 3 significant changes per month"},
       {v:5,pts:100,label:"Average of 4+ significant changes per month"}
     ]},
-    { id:"TH3", label:"TH3 — Integrations", weight:0.25, options:[
+    { id:"TH3", label:"TH3 — Integrations", weight:0.25, order:3, options:[
       {v:1,pts:0,label:"No integrations with the client's systems"},
       {v:2,pts:40,label:"Integration for inbound data only"},
       {v:3,pts:60,label:"Partial integration with 1 client system or vendor"},
       {v:4,pts:80,label:"Full integration with 1 client system or vendor"},
       {v:5,pts:100,label:"Full integration with key impact client systems or vendors"}
     ]},
-    { id:"TH4", label:"TH4 — Post Incident Reports", weight:0.2, options:[
+    { id:"TH4", label:"TH4 — Post Incident Reports", weight:0.2, order:4, options:[
       {v:1,pts:0,label:">2 post incident reports per quarter"},
       {v:2,pts:10,label:"2 post incident reports per quarter"},
       {v:3,pts:30,label:"1 post incident report per quarter"},
       {v:4,pts:100,label:"0 post incident reports per quarter"}
     ]},
-    { id:"TH5", label:"TH5 — Executive Escalations", weight:0.4, options:[
+    { id:"TH5", label:"TH5 — Executive Escalations", weight:0.4, order:5, options:[
       {v:1,pts:0,label:"Caused by CE to VP or above"},
       {v:2,pts:20,label:"Caused by CE to Director level"},
       {v:3,pts:40,label:"Not caused by CE but escalated to VP or above"},
@@ -710,34 +784,34 @@ const QUESTIONS = {
       {v:5,pts:100,label:"No executive escalations"}
     ]}
   ]},
-  "Contractual": { code: "Con", questions: [
-    { id:"C1", label:"C1 — Enterprise Licence Agreement", weight:0.1, options:[
+  "Contractual": { code: "Con", catOrder: 7, questions: [
+    { id:"C1", label:"C1 — Enterprise Licence Agreement", weight:0.1, order:1, options:[
       {v:1,pts:0,label:"No ELA in place with customer"},
       {v:2,pts:100,label:"ELA in place with customer"}
     ]},
-    { id:"C2", label:"C2 — Multiyear Contract", weight:0.1, options:[
+    { id:"C2", label:"C2 — Multiyear Contract", weight:0.1, order:2, options:[
       {v:1,pts:0,label:"Contract is in final 3 months with no renewal proposal"},
       {v:2,pts:50,label:"Contract has less than 12 months or a T for C"},
       {v:3,pts:80,label:"Contract has less than 24 months remaining"},
       {v:4,pts:90,label:"Contract has less than 36 months remaining"},
       {v:5,pts:100,label:"Contract has more than 36 months remaining"}
     ]},
-    { id:"C3", label:"C3 — Upsell Opportunity", weight:0.15, options:[
+    { id:"C3", label:"C3 — Upsell Opportunity", weight:0.15, order:3, options:[
       {v:1,pts:0,label:"No upsell opportunity currently identified"},
       {v:2,pts:50,label:"Upsell opportunity identified"},
       {v:3,pts:75,label:"Upsell opportunity identified and with Sales at Stage 2"},
       {v:4,pts:100,label:"Upsell opportunity at Stage 3+"}
     ]},
-    { id:"C4", label:"C4 — Termination Clause", weight:0.2, options:[
+    { id:"C4", label:"C4 — Termination Clause", weight:0.2, order:4, options:[
       {v:1,pts:0,label:"Contract contains a termination for convenience clause"},
       {v:2,pts:100,label:"No termination for convenience clause in place"}
     ]},
-    { id:"C5", label:"C5 — Partner Sales", weight:0.15, options:[
+    { id:"C5", label:"C5 — Partner Sales", weight:0.15, order:5, options:[
       {v:1,pts:0,label:"Purchase through a Partner with no access to end client"},
       {v:2,pts:75,label:"Purchase through a Partner with access to end client"},
       {v:3,pts:100,label:"Purchase is direct to Cognigy/NiCE"}
     ]},
-    { id:"C6", label:"C6 — Recurring Customer Journeys", weight:0.3, options:[
+    { id:"C6", label:"C6 — Recurring Customer Journeys", weight:0.3, order:6, options:[
       {v:1,pts:0,label:"Single one-time activity with known end point"},
       {v:2,pts:50,label:"Single recurring customer journey"},
       {v:3,pts:100,label:"Multiple recurring customer journeys"}
@@ -745,16 +819,104 @@ const QUESTIONS = {
   ]}
 };
 
+// Runtime question schema — populated from Airtable, falls back to seed
+let QUESTIONS = {};
+let CATS = [];
+let TOTAL_QS = 0;
+
+function buildQuestionsFromRecords(records) {
+  const schema = {};
+  // Sort by category order then question order
+  const active = records.filter(r => r.fields.Active !== false);
+  active.sort((a,b) => (a.fields["Category Order"]||99) - (b.fields["Category Order"]||99) || (a.fields["Question Order"]||99) - (b.fields["Question Order"]||99));
+  for (const r of active) {
+    const cat = r.fields["Category"] || "Uncategorised";
+    const code = r.fields["Category Code"] || cat.substring(0,3).toUpperCase();
+    if (!schema[cat]) schema[cat] = { code, questions: [] };
+    let options = [];
+    try { options = JSON.parse(r.fields["Options JSON"] || "[]"); } catch(e) {}
+    schema[cat].questions.push({
+      id: r.fields["Question ID"],
+      label: r.fields["Question Label"],
+      weight: parseFloat(r.fields["Weight"] || 0.5),
+      options,
+      _recordId: r.id
+    });
+  }
+  return schema;
+}
+
+function refreshQuestionMeta() {
+  CATS = Object.keys(QUESTIONS);
+  TOTAL_QS = CATS.reduce((a,c) => a + QUESTIONS[c].questions.length, 0);
+}
+
+// Category score field names in Airtable (fixed — tied to Scores table schema)
 const CAT_SCORE_FIELDS = {
   "Business Case":"BC_Score","Journey Volumes":"Vol_Score","Engagement":"Eng_Score",
   "Advocacy":"Adv_Score","Differentiators":"Diff_Score","Technical Health":"TH_Score","Contractual":"Con_Score"
 };
-const CAT_SHORT = {
-  "Business Case":"Biz Case","Journey Volumes":"Volumes","Engagement":"Engagement",
-  "Advocacy":"Advocacy","Differentiators":"Differ.","Technical Health":"Tech Health","Contractual":"Contractual"
-};
-const CATS = Object.keys(QUESTIONS);
-const TOTAL_QS = CATS.reduce((a,c) => a + QUESTIONS[c].questions.length, 0);
+
+function getCatShort(cat) {
+  const MAP = {
+    "Business Case":"Biz Case","Journey Volumes":"Volumes","Engagement":"Engagement",
+    "Advocacy":"Advocacy","Differentiators":"Differ.","Technical Health":"Tech Health","Contractual":"Contractual"
+  };
+  return MAP[cat] || (cat.length > 10 ? cat.substring(0,9)+'…' : cat);
+}
+
+// ── QUESTIONS API ─────────────────────────────────────────────────────────────
+async function loadQuestions() {
+  const data = await atFetch("GET", `${QUESTIONS_TABLE}?maxRecords=500&sort[0][field]=Category%20Order&sort[1][field]=Question%20Order`);
+  const records = data.records || [];
+  if (records.length === 0) {
+    // Seed from hardcoded data on first run
+    await seedQuestions();
+    return loadQuestions();
+  }
+  QUESTIONS = buildQuestionsFromRecords(records);
+  refreshQuestionMeta();
+  return records;
+}
+
+async function seedQuestions() {
+  const records = [];
+  for (const [cat, catData] of Object.entries(SEED_QUESTIONS)) {
+    for (const q of catData.questions) {
+      records.push({ fields: {
+        "Question ID": q.id,
+        "Category": cat,
+        "Category Order": catData.catOrder,
+        "Question Label": q.label,
+        "Question Order": q.order,
+        "Weight": q.weight,
+        "Options JSON": JSON.stringify(q.options),
+        "Active": true
+      }});
+    }
+  }
+  // Airtable max 10 records per POST
+  for (let i = 0; i < records.length; i += 10) {
+    await atFetch("POST", QUESTIONS_TABLE, { records: records.slice(i, i+10) });
+  }
+}
+
+async function loadAllQuestionRecords() {
+  const data = await atFetch("GET", `${QUESTIONS_TABLE}?maxRecords=500&sort[0][field]=Category%20Order&sort[1][field]=Question%20Order`);
+  return data.records || [];
+}
+
+async function saveQuestionRecord(recordId, fields) {
+  return atFetch("PATCH", `${QUESTIONS_TABLE}/${recordId}`, { fields });
+}
+
+async function createQuestionRecord(fields) {
+  return atFetch("POST", QUESTIONS_TABLE, { records: [{ fields }] });
+}
+
+async function archiveQuestionRecord(recordId) {
+  return atFetch("PATCH", `${QUESTIONS_TABLE}/${recordId}`, { fields: { "Active": false } });
+}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = {
@@ -1237,7 +1399,7 @@ function makeRadarSVG(reviews) {
     const ly = cy + lr*Math.sin(a);
     const pct = Math.round((lastF[CAT_SCORE_FIELDS[cat]]||0)*100);
     const col = pct>=75?'#1fd67a':pct>=50?'#f5a623':'#f04b4b';
-    return `<text x="${lx}" y="${ly-5}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>
+    return `<text x="${lx}" y="${ly-5}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>
             <text x="${lx}" y="${ly+8}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${col}" font-family="DM Mono,monospace" font-weight="500">${pct}%</text>`;
   }).join('');
 
@@ -1300,7 +1462,7 @@ function makeTrendSVG(reviews) {
     const lx = PAD.left + (ci % 4) * 115;
     const ly = H + 15 + Math.floor(ci / 4) * 18;
     return `<rect x="${lx}" y="${ly - 5}" width="10" height="10" rx="2" fill="${colors[ci]}"/>
-            <text x="${lx + 14}" y="${ly + 3}" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>`;
+            <text x="${lx + 14}" y="${ly + 3}" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>`;
   }).join('');
 
   const totalH = H + 15 + Math.ceil(cats.length / 4) * 18 + 10;
@@ -1376,7 +1538,7 @@ function renderDashboard() {
     const pct = Math.round((f[CAT_SCORE_FIELDS[cat]] || 0) * 100);
     return `<div class="score-card">
       <div class="score-value" style="color:${scoreColor(pct)}">${pct}%</div>
-      <div class="score-label">${CAT_SHORT[cat]}</div>
+      <div class="score-label">${getCatShort(cat)}</div>
     </div>`;
   }).join('');
 
@@ -1418,6 +1580,309 @@ function renderDashboard() {
     </div>`;
 }
 
+// ── QUESTION ADMIN ───────────────────────────────────────────────────────────
+let allQuestionRecords = [];
+
+function showAdminTab(tab) {
+  document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('atab-' + tab).classList.add('active');
+  document.getElementById('admin-tab-clients').style.display = tab === 'clients' ? 'block' : 'none';
+  document.getElementById('admin-tab-questions').style.display = tab === 'questions' ? 'block' : 'none';
+  if (tab === 'questions') renderQuestionsAdmin();
+}
+
+async function renderQuestionsAdmin() {
+  const container = document.getElementById('questions-admin-container');
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span>Loading questions...</div>';
+  try {
+    allQuestionRecords = await loadAllQuestionRecords();
+    buildQuestionsAdminUI(container);
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+function buildQuestionsAdminUI(container) {
+  const active = allQuestionRecords.filter(r => r.fields.Active !== false);
+  active.sort((a,b) => (a.fields["Category Order"]||99) - (b.fields["Category Order"]||99) || (a.fields["Question Order"]||99) - (b.fields["Question Order"]||99));
+
+  // Group by category
+  const cats = {};
+  active.forEach(r => {
+    const cat = r.fields["Category"] || "Uncategorised";
+    if (!cats[cat]) cats[cat] = { order: r.fields["Category Order"]||99, records: [] };
+    cats[cat].records.push(r);
+  });
+
+  let html = `<button class="btn-add-section" onclick="addNewSection()">+ Add New Section</button>`;
+
+  for (const [cat, data] of Object.entries(cats)) {
+    html += `<div class="q-admin-cat" id="qcat-${CSS.escape(cat)}">
+      <div class="q-admin-cat-header" onclick="toggleCat('${cat.replace(/'/g,"\'")}')">
+        <span class="q-admin-cat-name">${cat}</span>
+        <span class="q-admin-cat-toggle">▾</span>
+      </div>
+      <div id="qcat-body-${cat.replace(/\s/g,'_')}" style="display:block">`;
+
+    data.records.forEach(r => {
+      let opts = [];
+      try { opts = JSON.parse(r.fields["Options JSON"] || "[]"); } catch(e) {}
+      const optsPreview = opts.map(o =>
+        `<div class="q-admin-opt"><span class="q-admin-opt-v">${o.v}</span><span class="q-admin-opt-pts">${o.pts}pts</span><span>${o.label}</span></div>`
+      ).join('');
+
+      html += `<div class="q-admin-q" id="qrow-${r.id}">
+        <div class="q-admin-q-row">
+          <div style="flex:1">
+            <div class="q-admin-q-label">${r.fields["Question Label"] || r.fields["Question ID"]}</div>
+            <div class="q-admin-weight">Weight: ${Math.round((r.fields["Weight"]||0)*100)}% &nbsp;|&nbsp; ID: ${r.fields["Question ID"]}</div>
+          </div>
+          <div class="q-admin-q-actions">
+            <button class="btn-q-edit" onclick="openQEdit('${r.id}')">Edit</button>
+            <button class="btn-q-archive" onclick="archiveQ('${r.id}', '${(r.fields["Question Label"]||"").replace(/'/g,"\'")}')">Archive</button>
+          </div>
+        </div>
+        <div class="q-admin-options">${optsPreview}</div>
+        <div class="q-edit-form" id="qedit-${r.id}"></div>
+      </div>`;
+    });
+
+    html += `<button class="btn-add-question" onclick="addNewQuestion('${cat.replace(/'/g,"\'")}', ${data.order})">+ Add Question to ${cat}</button>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function toggleCat(cat) {
+  const body = document.getElementById('qcat-body-' + cat.replace(/\s/g,'_'));
+  if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function openQEdit(recordId) {
+  // Close any other open editors
+  document.querySelectorAll('.q-edit-form.open').forEach(f => { if (f.id !== 'qedit-' + recordId) { f.classList.remove('open'); f.innerHTML = ''; }});
+
+  const form = document.getElementById('qedit-' + recordId);
+  if (form.classList.contains('open')) { form.classList.remove('open'); form.innerHTML = ''; return; }
+
+  const rec = allQuestionRecords.find(r => r.id === recordId);
+  if (!rec) return;
+  let opts = [];
+  try { opts = JSON.parse(rec.fields["Options JSON"] || "[]"); } catch(e) {}
+
+  form.innerHTML = buildQEditHTML(recordId, rec.fields, opts);
+  form.classList.add('open');
+}
+
+function buildQEditHTML(recordId, fields, opts, isNew = false) {
+  const optsHTML = opts.map((o, i) => `
+    <div class="q-edit-opt-row" id="opt-row-${recordId}-${i}">
+      <span class="lbl">Opt ${o.v}</span>
+      <input type="text" value="${(o.label||'').replace(/"/g,'&quot;')}" id="opt-lbl-${recordId}-${i}" placeholder="Descriptor text">
+      <span class="lbl">pts</span>
+      <input type="number" value="${o.pts||0}" id="opt-pts-${recordId}-${i}" min="0" max="100">
+      <button class="btn-rm-opt" onclick="removeOptRow('${recordId}', ${i})">×</button>
+    </div>`).join('');
+
+  return `
+    <div class="q-edit-row">
+      <label class="q-edit-label">Question Label</label>
+      <input type="text" id="qf-label-${recordId}" value="${(fields["Question Label"]||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="q-edit-row" style="flex:1">
+        <label class="q-edit-label">Question ID</label>
+        <input type="text" id="qf-id-${recordId}" value="${fields["Question ID"]||''}">
+      </div>
+      <div class="q-edit-row" style="flex:1">
+        <label class="q-edit-label">Weight (0–1)</label>
+        <input type="number" id="qf-weight-${recordId}" value="${fields["Weight"]||0.5}" step="0.05" min="0" max="1">
+      </div>
+      <div class="q-edit-row" style="flex:1">
+        <label class="q-edit-label">Order</label>
+        <input type="number" id="qf-order-${recordId}" value="${fields["Question Order"]||1}" min="1">
+      </div>
+    </div>
+    <label class="q-edit-label">Options</label>
+    <div id="opts-container-${recordId}">${optsHTML}</div>
+    <button class="btn-add-opt" onclick="addOptRow('${recordId}')">+ Add Option</button>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-save-q" onclick="saveQEdit('${recordId}', ${isNew})">${isNew ? 'Create Question' : 'Save Changes'}</button>
+      <button class="btn-cancel-q" onclick="cancelQEdit('${recordId}')">Cancel</button>
+    </div>
+    <div class="error-msg" id="qedit-err-${recordId}"></div>`;
+}
+
+function removeOptRow(recordId, idx) {
+  const row = document.getElementById(`opt-row-${recordId}-${idx}`);
+  if (row) row.remove();
+}
+
+function addOptRow(recordId) {
+  const container = document.getElementById('opts-container-' + recordId);
+  const existing = container.querySelectorAll('.q-edit-opt-row').length;
+  const newV = existing + 1;
+  const div = document.createElement('div');
+  div.className = 'q-edit-opt-row';
+  div.id = `opt-row-${recordId}-new-${newV}`;
+  div.innerHTML = `
+    <span class="lbl">Opt ${newV}</span>
+    <input type="text" id="opt-lbl-${recordId}-new-${newV}" placeholder="Descriptor text">
+    <span class="lbl">pts</span>
+    <input type="number" id="opt-pts-${recordId}-new-${newV}" value="0" min="0" max="100">
+    <button class="btn-rm-opt" onclick="this.parentElement.remove()">×</button>`;
+  container.appendChild(div);
+}
+
+function cancelQEdit(recordId) {
+  const form = document.getElementById('qedit-' + recordId);
+  if (form) { form.classList.remove('open'); form.innerHTML = ''; }
+}
+
+async function saveQEdit(recordId, isNew = false) {
+  const errEl = document.getElementById('qedit-err-' + recordId);
+  errEl.textContent = '';
+
+  const label = document.getElementById('qf-label-' + recordId).value.trim();
+  const qid = document.getElementById('qf-id-' + recordId).value.trim();
+  const weight = parseFloat(document.getElementById('qf-weight-' + recordId).value);
+  const order = parseInt(document.getElementById('qf-order-' + recordId).value);
+
+  if (!label || !qid) { errEl.textContent = 'Label and ID are required.'; return; }
+
+  // Collect options
+  const optRows = document.querySelectorAll(`#opts-container-${recordId} .q-edit-opt-row`);
+  const opts = [];
+  optRows.forEach((row, i) => {
+    const lblEl = row.querySelector('input[type="text"]');
+    const ptsEl = row.querySelector('input[type="number"]');
+    if (lblEl && lblEl.value.trim()) {
+      opts.push({ v: i+1, label: lblEl.value.trim(), pts: parseInt(ptsEl?.value||0) });
+    }
+  });
+
+  if (opts.length < 1) { errEl.textContent = 'At least one option is required.'; return; }
+
+  const fields = {
+    "Question Label": label,
+    "Question ID": qid,
+    "Weight": weight,
+    "Question Order": order,
+    "Options JSON": JSON.stringify(opts),
+    "Active": true
+  };
+
+  try {
+    if (isNew) {
+      await createQuestionRecord(fields);
+    } else {
+      await saveQuestionRecord(recordId, fields);
+    }
+    // Reload questions and rebuild UI
+    await loadQuestions();
+    buildSidebar();
+    renderQuestions();
+    await renderQuestionsAdmin();
+  } catch(e) {
+    errEl.textContent = 'Save failed: ' + e.message;
+  }
+}
+
+async function archiveQ(recordId, label) {
+  if (!confirm(`Archive "${label}"? It will no longer appear in score entry but historical data is preserved.`)) return;
+  try {
+    await archiveQuestionRecord(recordId);
+    await loadQuestions();
+    buildSidebar();
+    renderQuestions();
+    await renderQuestionsAdmin();
+  } catch(e) {
+    alert('Archive failed: ' + e.message);
+  }
+}
+
+function addNewQuestion(cat, catOrder) {
+  const tempId = 'new-' + Date.now();
+  const container = document.getElementById('qcat-body-' + cat.replace(/\s/g,'_'));
+  if (!container) return;
+
+  const qCount = QUESTIONS[cat] ? QUESTIONS[cat].questions.length + 1 : 1;
+  const div = document.createElement('div');
+  div.className = 'q-admin-q';
+  div.id = 'qrow-' + tempId;
+  div.innerHTML = `<div class="q-admin-q-label" style="margin-bottom:8px;color:var(--accent-light)">New Question</div>
+    <div class="q-edit-form open" id="qedit-${tempId}">
+      ${buildQEditHTML(tempId, {
+        "Question Label": "", "Question ID": "", "Weight": 0.5,
+        "Question Order": qCount, "Category": cat, "Category Order": catOrder
+      }, [{v:1,pts:0,label:""},{v:2,pts:50,label:""},{v:3,pts:100,label:""}], true)}
+    </div>`;
+
+  // Store category info so saveQEdit can use it
+  div.dataset.cat = cat;
+  div.dataset.catOrder = catOrder;
+  container.insertBefore(div, container.lastElementChild);
+
+  // Override save to include category fields
+  const origSave = window.saveQEdit;
+  div.querySelector('.btn-save-q').onclick = async () => {
+    const errEl = document.getElementById('qedit-err-' + tempId);
+    errEl.textContent = '';
+    const label = document.getElementById('qf-label-' + tempId).value.trim();
+    const qid = document.getElementById('qf-id-' + tempId).value.trim();
+    const weight = parseFloat(document.getElementById('qf-weight-' + tempId).value);
+    const order = parseInt(document.getElementById('qf-order-' + tempId).value);
+    if (!label || !qid) { errEl.textContent = 'Label and ID are required.'; return; }
+    const optRows = document.querySelectorAll(`#opts-container-${tempId} .q-edit-opt-row`);
+    const opts = [];
+    optRows.forEach((row, i) => {
+      const lblEl = row.querySelector('input[type="text"]');
+      const ptsEl = row.querySelector('input[type="number"]');
+      if (lblEl && lblEl.value.trim()) opts.push({ v: i+1, label: lblEl.value.trim(), pts: parseInt(ptsEl?.value||0) });
+    });
+    if (opts.length < 1) { errEl.textContent = 'At least one option is required.'; return; }
+    try {
+      await createQuestionRecord({
+        "Question Label": label, "Question ID": qid, "Weight": weight,
+        "Question Order": order, "Category": cat, "Category Order": catOrder,
+        "Options JSON": JSON.stringify(opts), "Active": true
+      });
+      await loadQuestions();
+      buildSidebar(); renderQuestions();
+      await renderQuestionsAdmin();
+    } catch(e) { errEl.textContent = 'Create failed: ' + e.message; }
+  };
+}
+
+function addNewSection() {
+  const name = prompt("Enter section name:");
+  if (!name || !name.trim()) return;
+  const order = prompt("Enter section order (number):", "8");
+  if (!order) return;
+
+  // Create a placeholder question to establish the section
+  createQuestionRecord({
+    "Question Label": "New question — edit me",
+    "Question ID": name.trim().replace(/\s/g,'').substring(0,3).toUpperCase() + "1",
+    "Category": name.trim(),
+    "Category Order": parseInt(order)||8,
+    "Question Order": 1,
+    "Weight": 0.5,
+    "Options JSON": JSON.stringify([
+      {v:1,pts:0,label:"Option 1"},
+      {v:2,pts:50,label:"Option 2"},
+      {v:3,pts:100,label:"Option 3"}
+    ]),
+    "Active": true
+  }).then(async () => {
+    await loadQuestions();
+    buildSidebar(); renderQuestions();
+    await renderQuestionsAdmin();
+  }).catch(e => alert('Failed: ' + e.message));
+}
+
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
 function openAdmin() {
   document.getElementById('admin-modal').classList.add('open');
@@ -1451,7 +1916,8 @@ function tryAdminLogin() {
 async function showAdminMgmt() {
   document.getElementById('admin-login-screen').style.display = 'none';
   document.getElementById('admin-mgmt-screen').style.display = 'block';
-  document.getElementById('modal-title').textContent = 'Client Management';
+  document.getElementById('modal-title').textContent = 'Admin';
+  showAdminTab('clients');
   await refreshClientList();
 }
 
@@ -1510,6 +1976,15 @@ async function deleteClient(id, name) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
+  try {
+    await loadQuestions();
+  } catch(e) {
+    // Fall back to seed questions if Airtable unavailable
+    QUESTIONS = JSON.parse(JSON.stringify(SEED_QUESTIONS));
+    refreshQuestionMeta();
+    console.warn('Could not load questions from Airtable, using seed data:', e.message);
+  }
+  state.activeCat = CATS[0];
   buildSidebar();
   renderQuestions();
   updateNavButtons();
