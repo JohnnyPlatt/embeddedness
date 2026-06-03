@@ -193,24 +193,65 @@
   .q-label { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
   .q-weight { color: #1e3550; font-size: 10px; font-family: var(--font-mono); margin-left: 10px; flex-shrink: 0; }
 
-  .q-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-
-  .q-option {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 8px 11px; border-radius: 7px;
-    cursor: pointer; border: 1px solid transparent;
-    transition: all 0.12s;
+  /* Slider styles */
+  .slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  
+  .slider-track { flex: 1; position: relative; }
+  
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    background: var(--border); outline: none;
+    border: none; padding: 0; cursor: pointer;
+    transition: background 0.2s;
   }
-  .q-option:hover { background: rgba(42,127,255,0.05); }
-  .q-option.selected { background: rgba(42,127,255,0.08); border-color: rgba(42,127,255,0.25); }
-
-  .q-option input[type="radio"] {
-    width: auto; padding: 0; border: none; background: none;
-    margin-top: 3px; flex-shrink: 0; accent-color: var(--accent);
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 3px rgba(42,127,255,0.2);
+    transition: box-shadow 0.15s;
   }
-  .q-option-text { color: #94aec4; font-size: 13px; flex: 1; }
-  .q-option.selected .q-option-text { color: var(--accent-light); }
-  .q-option-pts { color: var(--muted); font-size: 11px; font-family: var(--font-mono); flex-shrink: 0; }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 5px rgba(42,127,255,0.25);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  .slider-steps { display: flex; justify-content: space-between; margin-top: 5px; padding: 0 1px; }
+  .slider-step { font-size: 9px; font-family: var(--font-mono); color: #1e3550; }
+  .slider-step.active { color: var(--accent-light); }
+
+  .slider-badge {
+    flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+    background: var(--accent-glow); border: 1px solid rgba(42,127,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 14px; font-weight: 500;
+    color: var(--accent-light);
+  }
+  .slider-badge.unanswered { background: var(--card); border-color: var(--border); color: var(--muted); }
+
+  .slider-descriptor {
+    min-height: 38px; padding: 8px 12px;
+    background: rgba(42,127,255,0.05);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    color: var(--accent-light); font-size: 13px;
+    margin-bottom: 10px;
+    transition: all 0.15s;
+  }
+  .slider-descriptor.unanswered {
+    background: var(--bg); border-left-color: var(--border);
+    color: var(--muted); font-style: italic;
+  }
+  .slider-pts {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--muted); margin-top: 3px;
+  }
 
   .q-comment {
     resize: vertical; min-height: 52px;
@@ -814,38 +855,111 @@ function renderQuestions() {
 
   const hdr = document.createElement('div');
   hdr.className = 'panel-header';
-  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">Select the descriptor that best fits the current state for this client.</div>`;
+  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">Drag the slider to the position that best fits the current state for this client.</div>`;
   container.appendChild(hdr);
 
   qs.forEach(q => {
     const card = document.createElement('div');
-    card.className = 'q-card' + (state.answers[q.id] !== undefined ? ' answered' : '');
+    const hasAnswer = state.answers[q.id] !== undefined;
+    card.className = 'q-card' + (hasAnswer ? ' answered' : '');
     card.id = 'qcard-' + q.id;
 
-    let optionsHTML = q.options.map(opt => `
-      <label class="q-option${state.answers[q.id] === opt.v ? ' selected' : ''}" id="opt-${q.id}-${opt.v}">
-        <input type="radio" name="${q.id}" value="${opt.v}" ${state.answers[q.id] === opt.v ? 'checked' : ''} onchange="selectOption('${q.id}', ${opt.v})">
-        <span class="q-option-text">${opt.label}</span>
-        <span class="q-option-pts">${opt.pts}pts</span>
-      </label>`).join('');
+    const max = q.options.length;
+    const curVal = state.answers[q.id] !== undefined ? state.answers[q.id] : 0;
+    const curOpt = curVal ? q.options.find(o => o.v === curVal) : null;
+
+    // Step markers
+    const steps = q.options.map((opt, i) =>
+      `<span class="slider-step${curVal === opt.v ? ' active' : ''}">${opt.v}</span>`
+    ).join('');
+
+    // Descriptor text
+    const descText = curOpt ? curOpt.label : 'Move the slider to select…';
+    const descPts = curOpt ? `${curOpt.pts} points` : '';
+    const descClass = curOpt ? 'slider-descriptor' : 'slider-descriptor unanswered';
+    const badgeClass = curOpt ? 'slider-badge' : 'slider-badge unanswered';
+    const badgeText = curOpt ? `${curVal}/${max}` : '–';
 
     card.innerHTML = `
       <div class="q-header">
         <div class="q-label">${q.label}</div>
         <div class="q-weight">wt ${Math.round(q.weight*100)}%</div>
       </div>
-      <div class="q-options">${optionsHTML}</div>
-      <textarea class="q-comment" placeholder="Add context or notes (optional)..." onchange="setComment('${q.id}', this.value)">${state.answers[q.id+'_c'] || ''}</textarea>`;
+      <div class="slider-row">
+        <div class="slider-track">
+          <input type="range" id="slider-${q.id}" min="1" max="${max}" step="1" value="${curVal || 1}"
+            oninput="onSliderMove('${q.id}')" onchange="onSliderCommit('${q.id}')">
+          <div class="slider-steps">${steps}</div>
+        </div>
+        <div class="${badgeClass}" id="badge-${q.id}">${badgeText}</div>
+      </div>
+      <div class="${descClass}" id="desc-${q.id}">
+        <div id="desc-text-${q.id}">${descText}</div>
+        <div class="slider-pts" id="desc-pts-${q.id}">${descPts}</div>
+      </div>
+      <textarea class="q-comment" placeholder="Add context or notes (optional)..." oninput="setComment('${q.id}', this.value)">${state.answers[q.id+'_c'] || ''}</textarea>`;
     container.appendChild(card);
+
+    // Set slider track fill colour
+    if (curVal) updateSliderFill(q.id, curVal, max);
   });
 }
 
-function selectOption(qid, val) {
+function updateSliderFill(qid, val, max) {
+  const slider = document.getElementById('slider-' + qid);
+  if (!slider) return;
+  const pct = ((val - 1) / (max - 1)) * 100;
+  slider.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`;
+}
+
+function onSliderMove(qid) {
+  const slider = document.getElementById('slider-' + qid);
+  const val = parseInt(slider.value);
+  const q = findQuestion(qid);
+  if (!q) return;
+  const max = q.options.length;
+  const opt = q.options.find(o => o.v === val);
+
+  // Update descriptor live
+  const descEl = document.getElementById('desc-' + qid);
+  const descText = document.getElementById('desc-text-' + qid);
+  const descPts = document.getElementById('desc-pts-' + qid);
+  const badge = document.getElementById('badge-' + qid);
+
+  if (opt) {
+    descEl.className = 'slider-descriptor';
+    descText.textContent = opt.label;
+    descPts.textContent = opt.pts + ' points';
+    badge.className = 'slider-badge';
+    badge.textContent = val + '/' + max;
+  }
+
+  updateSliderFill(qid, val, max);
+
+  // Update step markers
+  const steps = document.querySelectorAll(`#qcard-${qid} .slider-step`);
+  steps.forEach((s, i) => s.classList.toggle('active', i + 1 === val));
+}
+
+function onSliderCommit(qid) {
+  const slider = document.getElementById('slider-' + qid);
+  const val = parseInt(slider.value);
   state.answers[qid] = val;
-  // Update visual state
-  document.querySelectorAll(`[id^="opt-${qid}-"]`).forEach(el => el.classList.remove('selected'));
-  document.getElementById(`opt-${qid}-${val}`).classList.add('selected');
   document.getElementById('qcard-' + qid).classList.add('answered');
+  buildSidebar();
+}
+
+function findQuestion(qid) {
+  for (const cat of Object.keys(QUESTIONS)) {
+    const q = QUESTIONS[cat].questions.find(q => q.id === qid);
+    if (q) return q;
+  }
+  return null;
+}
+
+function selectOption(qid, val) {
+  // kept for compatibility
+  state.answers[qid] = val;
   buildSidebar();
 }
 
