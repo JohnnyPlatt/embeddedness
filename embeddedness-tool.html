@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embeddedness Review Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #05080f;
+    --surface: #0d1520;
+    --card: #111d2e;
+    --border: #1a3050;
+    --border-light: #233d5a;
+    --text: #e8eef5;
+    --muted: #5a7a96;
+    --accent: #2a7fff;
+    --accent-glow: rgba(42, 127, 255, 0.15);
+    --accent-light: #82b8ff;
+    --green: #1fd67a;
+    --amber: #f5a623;
+    --red: #f04b4b;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(42,127,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(42,127,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 56px;
+    background: rgba(5,8,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    z-index: 50;
+  }
+
+  .header-brand {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent-light);
+    letter-spacing: -0.02em;
+  }
+
+  .header-brand span { color: var(--muted); font-weight: 400; }
+
+  .nav-tabs { display: flex; gap: 4px; }
+
+  .nav-tab {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .nav-tab.active {
+    background: var(--accent-glow);
+    color: var(--accent-light);
+    border: 1px solid rgba(42,127,255,0.2);
+  }
+
+  .nav-tab:hover:not(.active) { color: var(--text); background: var(--card); }
+
+  .btn-admin {
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 5px 14px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-admin:hover { border-color: var(--border-light); color: var(--text); }
+
+  /* ── LAYOUT ── */
+  .app { padding-top: 56px; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+
+  .view { display: none; flex: 1; overflow: hidden; }
+  .view.active { display: flex; }
+
+  /* ── REVIEW VIEW ── */
+  .review-layout { display: flex; flex: 1; overflow: hidden; }
+
+  .sidebar {
+    width: 220px;
+    background: rgba(13,21,32,0.8);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-progress { padding: 16px 14px; border-bottom: 1px solid var(--border); }
+  .sidebar-progress-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
+  .progress-bar { background: var(--card); border-radius: 2px; height: 4px; }
+  .progress-fill { background: var(--accent); height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .progress-count { color: var(--muted); font-size: 11px; font-family: var(--font-mono); margin-top: 5px; }
+
+  .sidebar-cats { padding: 10px 8px; }
+
+  .cat-btn {
+    width: 100%; text-align: left;
+    background: none; border: none;
+    border-radius: 7px; padding: 9px 10px;
+    cursor: pointer; margin-bottom: 2px;
+    transition: background 0.15s;
+  }
+  .cat-btn:hover { background: var(--card); }
+  .cat-btn.active { background: var(--accent-glow); border: 1px solid rgba(42,127,255,0.15); }
+
+  .cat-btn-row { display: flex; justify-content: space-between; align-items: center; }
+  .cat-btn-name { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .cat-btn.active .cat-btn-name { color: var(--accent-light); }
+  .cat-score { font-size: 11px; font-family: var(--font-mono); font-weight: 500; }
+  .cat-progress { color: #1e3550; font-size: 10px; margin-top: 2px; font-family: var(--font-mono); }
+
+  /* ── MAIN PANEL ── */
+  .main-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+  .panel-header { margin-bottom: 24px; }
+  .panel-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .panel-subtitle { color: var(--muted); font-size: 13px; }
+
+  .client-row { display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+  .field-group { flex: 1; min-width: 170px; }
+  .field-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px; }
+
+  select, input[type="text"], textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 13px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: rgba(42,127,255,0.4); }
+  select option { background: var(--card); }
+  select.placeholder { color: var(--muted); }
+
+  .q-card {
+    background: var(--card);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .q-card.answered { border-color: rgba(42,127,255,0.15); }
+
+  .q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .q-label { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
+  .q-weight { color: #1e3550; font-size: 10px; font-family: var(--font-mono); margin-left: 10px; flex-shrink: 0; }
+
+  .q-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+  .q-option {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 11px; border-radius: 7px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 0.12s;
+  }
+  .q-option:hover { background: rgba(42,127,255,0.05); }
+  .q-option.selected { background: rgba(42,127,255,0.08); border-color: rgba(42,127,255,0.25); }
+
+  .q-option input[type="radio"] {
+    width: auto; padding: 0; border: none; background: none;
+    margin-top: 3px; flex-shrink: 0; accent-color: var(--accent);
+  }
+  .q-option-text { color: #94aec4; font-size: 13px; flex: 1; }
+  .q-option.selected .q-option-text { color: var(--accent-light); }
+  .q-option-pts { color: var(--muted); font-size: 11px; font-family: var(--font-mono); flex-shrink: 0; }
+
+  .q-comment {
+    resize: vertical; min-height: 52px;
+    background: var(--bg);
+    font-size: 12px; color: var(--muted);
+  }
+
+  .nav-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-bottom: 24px; }
+
+  .btn { 
+    font-family: var(--font-body); font-size: 14px; font-weight: 600;
+    padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary { background: var(--card); color: var(--muted); }
+  .btn-secondary:hover { color: var(--text); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1a6fe8; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--border); cursor: default; transform: none; }
+  .btn-next { background: var(--accent-glow); color: var(--accent-light); border: 1px solid rgba(42,127,255,0.2); }
+  .btn-next:hover { background: rgba(42,127,255,0.2); }
+
+  .error-msg { color: var(--red); font-size: 12px; margin-top: 6px; }
+
+  /* ── SUCCESS STATE ── */
+  .success-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; gap: 14px; text-align: center; padding: 40px;
+  }
+  .success-icon {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: rgba(31,214,122,0.1); border: 1px solid rgba(31,214,122,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  .success-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--green); }
+  .success-sub { color: var(--muted); font-size: 14px; }
+
+  /* ── DASHBOARD ── */
+  .dashboard-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+  .dashboard-controls { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+  .dashboard-controls select { max-width: 260px; }
+
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 22px; }
+
+  .score-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .score-card:hover { border-color: var(--border-light); }
+  .score-value { font-family: var(--font-mono); font-size: 28px; font-weight: 500; }
+  .score-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  @media (max-width: 800px) { .charts-row { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+  }
+  .chart-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .chart-placeholder {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 200px; color: var(--muted); gap: 8px;
+  }
+  .chart-placeholder-icon { font-size: 28px; }
+  .chart-placeholder-text { font-size: 13px; }
+
+  .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 22px; }
+  .detail-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+  .detail-cat { margin-bottom: 18px; }
+  .detail-cat-name { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .detail-q { background: var(--bg); border-radius: 7px; padding: 10px 13px; margin-bottom: 6px; }
+  .detail-q-row { display: flex; justify-content: space-between; }
+  .detail-q-label { color: #94aec4; font-size: 12px; }
+  .detail-q-pts { color: var(--text); font-size: 12px; font-weight: 600; font-family: var(--font-mono); }
+  .detail-q-answer { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .detail-q-comment { color: #3a5570; font-size: 11px; margin-top: 4px; font-style: italic; }
+  .detail-q-empty { color: #1e3550; font-size: 11px; margin-top: 3px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 14px; padding: 28px;
+    width: 480px; max-height: 80vh; overflow-y: auto;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+
+  .add-client-form { background: var(--card); border-radius: 9px; padding: 16px; margin-bottom: 18px; }
+  .add-client-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .add-client-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .add-client-row input { flex: 1; min-width: 120px; }
+  .btn-add { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 10px 18px; cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .btn-add:hover { background: #1a6fe8; }
+  .btn-add:disabled { background: var(--border); cursor: default; }
+
+  .client-list { display: flex; flex-direction: column; gap: 6px; }
+  .client-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border-radius: 7px; padding: 10px 13px; }
+  .client-item-name { color: var(--text); font-size: 14px; font-weight: 600; }
+  .client-item-csm { color: var(--muted); font-size: 12px; }
+  .btn-remove { background: none; border: 1px solid var(--border); color: var(--red); border-radius: 5px; padding: 3px 10px; cursor: pointer; font-size: 12px; font-family: var(--font-body); }
+  .btn-remove:hover { background: rgba(240,75,75,0.08); }
+
+  .admin-login { display: flex; flex-direction: column; gap: 10px; }
+  .admin-login input[type="password"] { font-size: 14px; }
+
+  .empty-state { color: var(--muted); text-align: center; padding: 20px; font-size: 13px; }
+  .loading-state { color: var(--muted); text-align: center; padding: 30px; font-size: 13px; }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border-light); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .no-review-state { color: var(--muted); text-align: center; padding: 60px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">Embeddedness <span>Review</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('review')">Score Entry</button>
+    <button class="nav-tab" onclick="showView('dashboard')">Dashboard</button>
+  </nav>
+  <button class="btn-admin" onclick="openAdmin()">⚙ Admin</button>
+</header>
+
+<div class="app">
+
+  <!-- REVIEW VIEW -->
+  <div class="view active" id="view-review">
+    <div class="review-layout" id="review-layout">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-progress">
+          <div class="sidebar-progress-label">Progress</div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <div class="progress-count" id="progress-count">0 / 26</div>
+        </div>
+        <div class="sidebar-cats" id="sidebar-cats"></div>
+      </div>
+      <!-- Main -->
+      <div class="main-panel" id="main-panel">
+        <div class="client-row">
+          <div class="field-group">
+            <label class="field-label">Client</label>
+            <select id="sel-client" class="placeholder" onchange="onClientChange()">
+              <option value="">Select client...</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Your Name</label>
+            <input type="text" id="inp-csm" placeholder="Enter your name">
+          </div>
+        </div>
+        <div id="questions-container"></div>
+        <div class="nav-footer">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" id="btn-prev" onclick="prevCat()" style="display:none">← Back</button>
+            <button class="btn btn-next" id="btn-next" onclick="nextCat()">Next →</button>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="error-msg" id="submit-error"></div>
+            <button class="btn btn-primary" id="btn-submit" style="display:none" onclick="submitReview()">Submit Review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Success state -->
+    <div class="success-state" id="success-state" style="display:none">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Review Submitted</div>
+      <div class="success-sub" id="success-sub"></div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="resetReview()">Start New Review</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div class="view" id="view-dashboard">
+    <div class="dashboard-panel">
+      <div class="dashboard-controls">
+        <select id="dash-client" class="placeholder" style="max-width:260px" onchange="loadDashboard()">
+          <option value="">Select a client...</option>
+        </select>
+        <select id="dash-review" style="max-width:280px;display:none" onchange="renderDashboard()"></select>
+      </div>
+      <div id="dashboard-content">
+        <div class="no-review-state">Select a client to view their embeddedness scores.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Admin Access</div>
+      <button class="modal-close" onclick="closeAdmin()">×</button>
+    </div>
+    <!-- Login screen -->
+    <div id="admin-login-screen">
+      <div class="admin-login">
+        <input type="password" id="admin-pwd" placeholder="Password" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+        <div class="error-msg" id="admin-error"></div>
+        <button class="btn btn-primary" onclick="tryAdminLogin()">Enter</button>
+      </div>
+    </div>
+    <!-- Management screen -->
+    <div id="admin-mgmt-screen" style="display:none">
+      <div class="add-client-form">
+        <div class="add-client-label">Add New Client</div>
+        <div class="add-client-row">
+          <input type="text" id="new-client-name" placeholder="Client name">
+          <input type="text" id="new-csm-name" placeholder="CSM owner">
+          <button class="btn-add" id="btn-add-client" onclick="addClient()">Add</button>
+        </div>
+        <div class="error-msg" id="add-error"></div>
+      </div>
+      <div id="client-list-container">
+        <div class="loading-state"><span class="spinner"></span>Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const AIRTABLE_TOKEN = "patJhKzYQqtyi7UXU.306af9969fc810378141172b95ed6a985255e61724e8d8bac9ba61c9af1a4652";
+const BASE_ID = "appYG0HSIPBToJUK9";
+const CLIENTS_TABLE = "tblk3DZmZRQXbu34A";
+const SCORES_TABLE = "tblVQ2ehdSXLFhUZV";
+const ADMIN_PASSWORD = "cognigy2026";
+
+// ── QUESTION DATA ─────────────────────────────────────────────────────────────
+const QUESTIONS = {
+  "Business Case": { code: "BC", questions: [
+    { id:"BC1", label:"BC1 — Key Performance Indicators", weight:0.3, options:[
+      {v:1,pts:0,label:"Unable to generate or prove KPIs"},
+      {v:2,pts:5,label:"KPIs are below expectation with no plan to improve"},
+      {v:3,pts:50,label:"KPIs are below expectation but improving"},
+      {v:4,pts:90,label:"KPIs meet client expectation"},
+      {v:5,pts:100,label:"All KPIs routinely meet and exceed client expectations"}
+    ]},
+    { id:"BC2", label:"BC2 — Return on Investment", weight:0.7, options:[
+      {v:1,pts:0,label:"ROI is negative or no business case available"},
+      {v:2,pts:10,label:"ROI is significantly below expected levels"},
+      {v:3,pts:50,label:"ROI is below expected levels but improving"},
+      {v:4,pts:80,label:"ROI meets expectations from SoW OR exceeds but client is unaware"},
+      {v:5,pts:100,label:"ROI exceeds 3:1 and the client is aware"}
+    ]}
+  ]},
+  "Journey Volumes": { code: "Vol", questions: [
+    { id:"V1", label:"V1 — Customer Volumes (Annualised)", weight:0.45, options:[
+      {v:1,pts:0,label:"Customer run-rate is 50% below expected"},
+      {v:2,pts:50,label:"Customer run-rate is 25% below expected"},
+      {v:3,pts:70,label:"Customer run-rate is 10% below expected"},
+      {v:4,pts:90,label:"Customer run-rate is within 2% of expected"},
+      {v:5,pts:100,label:"Customer run-rate exceeds expectation"}
+    ]},
+    { id:"V2", label:"V2 — New Journeys", weight:0.25, options:[
+      {v:1,pts:50,label:"Happy with current provision, no aspiration for new journeys"},
+      {v:2,pts:50,label:"Journey numbers have stayed the same"},
+      {v:3,pts:60,label:"Journeys increased by x1.25 in last 12 months"},
+      {v:4,pts:80,label:"Journeys increased by x1.5 in last 12 months"},
+      {v:5,pts:100,label:"Journeys increased by greater than x2 in last 12 months"}
+    ]},
+    { id:"V3", label:"V3 — Business Units Engaged", weight:0.3, options:[
+      {v:1,pts:0,label:"No additional business areas engaged in last 12 months"},
+      {v:2,pts:25,label:"Other business areas engaged but no further work"},
+      {v:3,pts:90,label:"1 new business unit in last 12 months with view to further work"},
+      {v:4,pts:100,label:"2 new business units in last 12 months with view to further work"}
+    ]}
+  ]},
+  "Engagement": { code: "Eng", questions: [
+    { id:"E1", label:"E1 — Stakeholder Relationships", weight:0.2, options:[
+      {v:1,pts:0,label:"No positive relationships exist within the client team"},
+      {v:2,pts:25,label:"Relationships only with the operations team"},
+      {v:3,pts:50,label:"Relationships to manager level"},
+      {v:4,pts:90,label:"Relationships to Director/VP level"},
+      {v:5,pts:100,label:"Fully mapped to all stakeholders up to SVP and Board"}
+    ]},
+    { id:"E2", label:"E2 — Executive Sponsorship", weight:0.15, options:[
+      {v:1,pts:0,label:"There is no Exec sponsor in place"},
+      {v:2,pts:25,label:"The Exec sponsor has met their counterpart"},
+      {v:3,pts:50,label:"The Exec sponsor has an ad-hoc relationship with their counterpart"},
+      {v:4,pts:90,label:"The Exec sponsor has a calendarised annual meeting"},
+      {v:5,pts:100,label:"Scheduled quarterly meetings between Exec Sponsor and counterpart"}
+    ]},
+    { id:"E3", label:"E3 — EBRs and Workshops", weight:0.4, options:[
+      {v:1,pts:0,label:"No EBRs or Workshops have taken place"},
+      {v:2,pts:25,label:"Executive Reviews have taken place and further are booked"},
+      {v:3,pts:50,label:"1-2 in-person EBRs planned or taken place in the last 12 months"},
+      {v:4,pts:90,label:"3-4 virtual EBRs or 1-2 in-person EBRs and 2 workshops in last 12 months"},
+      {v:5,pts:100,label:"In-person EBRs scheduled quarterly plus multiple in-person workshops"}
+    ]},
+    { id:"E4", label:"E4 — Conferences and Events", weight:0.05, options:[
+      {v:1,pts:0,label:"Client has not attended any conferences or events"},
+      {v:2,pts:50,label:"Client attended virtual conferences or events"},
+      {v:3,pts:100,label:"Client attended in-person conferences or events"},
+      {v:4,pts:100,label:"Client has invited us to a conference"}
+    ]},
+    { id:"E5", label:"E5 — Enablement", weight:0.2, options:[
+      {v:1,pts:0,label:"Client has no aspiration to self-serve"},
+      {v:2,pts:10,label:"Client expressed interest in self-serve but has not yet acted"},
+      {v:3,pts:40,label:"Client using help centre"},
+      {v:4,pts:50,label:"Client has completed new training"},
+      {v:5,pts:90,label:"Client doing some config / publishing own config"}
+    ]}
+  ]},
+  "Advocacy": { code: "Adv", questions: [
+    { id:"A1", label:"A1 — Case Studies", weight:0.2, options:[
+      {v:1,pts:0,label:"No case study exists"},
+      {v:2,pts:50,label:"A private case study exists"},
+      {v:3,pts:75,label:"Published case study exists but older than 4 years"},
+      {v:4,pts:100,label:"Published case study within the last 4 years"}
+    ]},
+    { id:"A2", label:"A2 — Referee Credentials", weight:0.6, options:[
+      {v:1,pts:0,label:"Client is a detractor"},
+      {v:2,pts:70,label:"Client is happy but not yet a referee"},
+      {v:3,pts:80,label:"Exec willing to speak to prospects as a reference"},
+      {v:4,pts:90,label:"Client has spoken to prospects as a reference"},
+      {v:5,pts:100,label:"Exec has spoken to prospects as a reference"}
+    ]},
+    { id:"A3", label:"A3 — Advocacy", weight:0.2, options:[
+      {v:1,pts:0,label:"Client is a detractor"},
+      {v:2,pts:50,label:"Customer is happy but unable to act as an advocate"},
+      {v:3,pts:80,label:"Client is willing to speak at an event"},
+      {v:4,pts:90,label:"Client has spoken at an event"},
+      {v:5,pts:100,label:"Exec from the client has spoken at a public event"}
+    ]}
+  ]},
+  "Differentiators": { code: "Diff", questions: [
+    { id:"D1", label:"D1 — Differentiators", weight:0.5, options:[
+      {v:1,pts:0,label:"Client has fewer than 3 differentiators in their journeys"},
+      {v:2,pts:50,label:"Client has 3-4 of the 10 differentiators in at least 1 journey"},
+      {v:3,pts:75,label:"Client has 5-7 of the 10 differentiators in 2-4 journeys"},
+      {v:4,pts:100,label:"Client has 8-10 differentiators in majority/all journeys"}
+    ]},
+    { id:"D2", label:"D2 — Maturity Model", weight:0.5, options:[
+      {v:1,pts:0,label:"Client has no understanding of their maturity state"},
+      {v:2,pts:25,label:"Client understands what a fully mature implementation looks like"},
+      {v:3,pts:50,label:"Client understands maturity and is actively moving towards it"},
+      {v:4,pts:80,label:"Client's implementation uses much of the appropriate functionality"},
+      {v:5,pts:100,label:"Client's implementation uses all appropriate functionality available"}
+    ]}
+  ]},
+  "Technical Health": { code: "TH", questions: [
+    { id:"TH1", label:"TH1 — PCRs Raised", weight:0.05, options:[
+      {v:1,pts:0,label:"No additional functionality requested in previous 12 months"},
+      {v:2,pts:50,label:"1 PCR requested in the previous 12 months"},
+      {v:3,pts:75,label:"2-3 PCRs requested in the previous 12 months"},
+      {v:4,pts:100,label:"4+ PCRs requested in the previous 12 months"}
+    ]},
+    { id:"TH2", label:"TH2 — Projects Delivered", weight:0.1, options:[
+      {v:1,pts:0,label:"Average of less than 1 significant change per month"},
+      {v:2,pts:60,label:"Average of 1 significant change per month"},
+      {v:3,pts:80,label:"Average of 2 significant changes per month"},
+      {v:4,pts:90,label:"Average of 3 significant changes per month"},
+      {v:5,pts:100,label:"Average of 4+ significant changes per month"}
+    ]},
+    { id:"TH3", label:"TH3 — Integrations", weight:0.25, options:[
+      {v:1,pts:0,label:"No integrations with the client's systems"},
+      {v:2,pts:40,label:"Integration for inbound data only"},
+      {v:3,pts:60,label:"Partial integration with 1 client system or vendor"},
+      {v:4,pts:80,label:"Full integration with 1 client system or vendor"},
+      {v:5,pts:100,label:"Full integration with key impact client systems or vendors"}
+    ]},
+    { id:"TH4", label:"TH4 — Post Incident Reports", weight:0.2, options:[
+      {v:1,pts:0,label:">2 post incident reports per quarter"},
+      {v:2,pts:10,label:"2 post incident reports per quarter"},
+      {v:3,pts:30,label:"1 post incident report per quarter"},
+      {v:4,pts:100,label:"0 post incident reports per quarter"}
+    ]},
+    { id:"TH5", label:"TH5 — Executive Escalations", weight:0.4, options:[
+      {v:1,pts:0,label:"Caused by CE to VP or above"},
+      {v:2,pts:20,label:"Caused by CE to Director level"},
+      {v:3,pts:40,label:"Not caused by CE but escalated to VP or above"},
+      {v:4,pts:60,label:"Not caused by CE but escalated to Director level"},
+      {v:5,pts:100,label:"No executive escalations"}
+    ]}
+  ]},
+  "Contractual": { code: "Con", questions: [
+    { id:"C1", label:"C1 — Enterprise Licence Agreement", weight:0.1, options:[
+      {v:1,pts:0,label:"No ELA in place with customer"},
+      {v:2,pts:100,label:"ELA in place with customer"}
+    ]},
+    { id:"C2", label:"C2 — Multiyear Contract", weight:0.1, options:[
+      {v:1,pts:0,label:"Contract is in final 3 months with no renewal proposal"},
+      {v:2,pts:50,label:"Contract has less than 12 months or a T for C"},
+      {v:3,pts:80,label:"Contract has less than 24 months remaining"},
+      {v:4,pts:90,label:"Contract has less than 36 months remaining"},
+      {v:5,pts:100,label:"Contract has more than 36 months remaining"}
+    ]},
+    { id:"C3", label:"C3 — Upsell Opportunity", weight:0.15, options:[
+      {v:1,pts:0,label:"No upsell opportunity currently identified"},
+      {v:2,pts:50,label:"Upsell opportunity identified"},
+      {v:3,pts:75,label:"Upsell opportunity identified and with Sales at Stage 2"},
+      {v:4,pts:100,label:"Upsell opportunity at Stage 3+"}
+    ]},
+    { id:"C4", label:"C4 — Termination Clause", weight:0.2, options:[
+      {v:1,pts:0,label:"Contract contains a termination for convenience clause"},
+      {v:2,pts:100,label:"No termination for convenience clause in place"}
+    ]},
+    { id:"C5", label:"C5 — Partner Sales", weight:0.15, options:[
+      {v:1,pts:0,label:"Purchase through a Partner with no access to end client"},
+      {v:2,pts:75,label:"Purchase through a Partner with access to end client"},
+      {v:3,pts:100,label:"Purchase is direct to Cognigy/NiCE"}
+    ]},
+    { id:"C6", label:"C6 — Recurring Customer Journeys", weight:0.3, options:[
+      {v:1,pts:0,label:"Single one-time activity with known end point"},
+      {v:2,pts:50,label:"Single recurring customer journey"},
+      {v:3,pts:100,label:"Multiple recurring customer journeys"}
+    ]}
+  ]}
+};
+
+const CAT_SCORE_FIELDS = {
+  "Business Case":"BC_Score","Journey Volumes":"Vol_Score","Engagement":"Eng_Score",
+  "Advocacy":"Adv_Score","Differentiators":"Diff_Score","Technical Health":"TH_Score","Contractual":"Con_Score"
+};
+const CAT_SHORT = {
+  "Business Case":"Biz Case","Journey Volumes":"Volumes","Engagement":"Engagement",
+  "Advocacy":"Advocacy","Differentiators":"Differ.","Technical Health":"Tech Health","Contractual":"Contractual"
+};
+const CATS = Object.keys(QUESTIONS);
+const TOTAL_QS = CATS.reduce((a,c) => a + QUESTIONS[c].questions.length, 0);
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state = {
+  activeCat: CATS[0],
+  answers: {},
+  clients: [],
+  adminAuthed: false,
+  dashReviews: []
+};
+
+// ── AIRTABLE API ──────────────────────────────────────────────────────────────
+async function atFetch(method, path, body) {
+  const url = `https://api.airtable.com/v0/${BASE_ID}/${path}`;
+  const opts = {
+    method,
+    headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}`, "Content-Type": "application/json" }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) { const t = await res.text(); throw new Error(`${res.status}: ${t}`); }
+  return res.json();
+}
+
+async function loadClients() {
+  const data = await atFetch("GET", `${CLIENTS_TABLE}?maxRecords=200&sort[0][field]=Client%20Name&sort[0][direction]=asc`);
+  state.clients = (data.records || []).map(r => ({ id: r.id, name: r.fields["Client Name"] || "", csm: r.fields["CSM Owner"] || "" }));
+  return state.clients;
+}
+
+async function createClient(name, csm) {
+  return atFetch("POST", CLIENTS_TABLE, { records: [{ fields: { "Client Name": name, "CSM Owner": csm } }] });
+}
+
+async function removeClient(id) {
+  return atFetch("DELETE", `${CLIENTS_TABLE}/${id}`);
+}
+
+async function saveReview(client, csm, answers, scores) {
+  const fields = { Client: client, CSM: csm, "Review Date": new Date().toISOString().split("T")[0] };
+  for (const cat of CATS) {
+    for (const q of QUESTIONS[cat].questions) {
+      if (answers[q.id] !== undefined) fields[q.id] = answers[q.id];
+      if (answers[q.id + "_c"]) fields[q.id + "_comment"] = answers[q.id + "_c"];
+    }
+    if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
+  }
+  return atFetch("POST", SCORES_TABLE, { records: [{ fields }] });
+}
+
+async function fetchReviews(clientName) {
+  const f = encodeURIComponent(`{Client}="${clientName}"`);
+  const data = await atFetch("GET", `${SCORES_TABLE}?filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=asc`);
+  return data.records || [];
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+function calcScore(cat, answers) {
+  let score = 0;
+  for (const q of QUESTIONS[cat].questions) {
+    const v = answers[q.id];
+    if (v === undefined) continue;
+    const opt = q.options.find(o => o.v === v);
+    if (opt) score += (opt.pts / 100) * q.weight;
+  }
+  return Math.round(score * 100) / 100;
+}
+
+function calcAllScores(answers) {
+  const s = {};
+  CATS.forEach(c => { s[c] = calcScore(c, answers); });
+  return s;
+}
+
+function scoreColor(pct) {
+  if (pct >= 75) return "var(--green)";
+  if (pct >= 50) return "var(--amber)";
+  return "var(--red)";
+}
+
+// ── VIEW SWITCHING ────────────────────────────────────────────────────────────
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.querySelectorAll('.nav-tab')[v === 'review' ? 0 : 1].classList.add('active');
+  if (v === 'dashboard') refreshDashClientSelect();
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+function buildSidebar() {
+  const container = document.getElementById('sidebar-cats');
+  container.innerHTML = '';
+  CATS.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (cat === state.activeCat ? ' active' : '');
+    btn.id = 'cat-btn-' + cat.replace(/\s/g,'_');
+    const scores = calcAllScores(state.answers);
+    const sc = Math.round(scores[cat] * 100);
+    const done = QUESTIONS[cat].questions.filter(q => state.answers[q.id] !== undefined).length;
+    const total = QUESTIONS[cat].questions.length;
+    btn.innerHTML = `<div class="cat-btn-row">
+      <span class="cat-btn-name">${cat}</span>
+      ${done > 0 ? `<span class="cat-score" style="color:${scoreColor(sc)}">${sc}%</span>` : ''}
+    </div>
+    <div class="cat-progress">${done}/${total} answered</div>`;
+    btn.onclick = () => switchCat(cat);
+    container.appendChild(btn);
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = CATS.reduce((a,c) => a + QUESTIONS[c].questions.filter(q => state.answers[q.id] !== undefined).length, 0);
+  document.getElementById('progress-fill').style.width = (answered / TOTAL_QS * 100) + '%';
+  document.getElementById('progress-count').textContent = `${answered} / ${TOTAL_QS}`;
+}
+
+function switchCat(cat) {
+  state.activeCat = cat;
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
+}
+
+// ── QUESTIONS ─────────────────────────────────────────────────────────────────
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+
+  const cat = state.activeCat;
+  const qs = QUESTIONS[cat].questions;
+
+  const hdr = document.createElement('div');
+  hdr.className = 'panel-header';
+  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">Select the descriptor that best fits the current state for this client.</div>`;
+  container.appendChild(hdr);
+
+  qs.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'q-card' + (state.answers[q.id] !== undefined ? ' answered' : '');
+    card.id = 'qcard-' + q.id;
+
+    let optionsHTML = q.options.map(opt => `
+      <label class="q-option${state.answers[q.id] === opt.v ? ' selected' : ''}" id="opt-${q.id}-${opt.v}">
+        <input type="radio" name="${q.id}" value="${opt.v}" ${state.answers[q.id] === opt.v ? 'checked' : ''} onchange="selectOption('${q.id}', ${opt.v})">
+        <span class="q-option-text">${opt.label}</span>
+        <span class="q-option-pts">${opt.pts}pts</span>
+      </label>`).join('');
+
+    card.innerHTML = `
+      <div class="q-header">
+        <div class="q-label">${q.label}</div>
+        <div class="q-weight">wt ${Math.round(q.weight*100)}%</div>
+      </div>
+      <div class="q-options">${optionsHTML}</div>
+      <textarea class="q-comment" placeholder="Add context or notes (optional)..." onchange="setComment('${q.id}', this.value)">${state.answers[q.id+'_c'] || ''}</textarea>`;
+    container.appendChild(card);
+  });
+}
+
+function selectOption(qid, val) {
+  state.answers[qid] = val;
+  // Update visual state
+  document.querySelectorAll(`[id^="opt-${qid}-"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`opt-${qid}-${val}`).classList.add('selected');
+  document.getElementById('qcard-' + qid).classList.add('answered');
+  buildSidebar();
+}
+
+function setComment(qid, val) {
+  state.answers[qid + '_c'] = val;
+}
+
+function updateNavButtons() {
+  const idx = CATS.indexOf(state.activeCat);
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const btnSubmit = document.getElementById('btn-submit');
+  btnPrev.style.display = idx > 0 ? 'inline-block' : 'none';
+  if (idx === CATS.length - 1) {
+    btnNext.style.display = 'none';
+    btnSubmit.style.display = 'inline-block';
+  } else {
+    btnNext.style.display = 'inline-block';
+    btnSubmit.style.display = 'none';
+  }
+}
+
+function nextCat() {
+  const idx = CATS.indexOf(state.activeCat);
+  if (idx < CATS.length - 1) switchCat(CATS[idx + 1]);
+}
+
+function prevCat() {
+  const idx = CATS.indexOf(state.activeCat);
+  if (idx > 0) switchCat(CATS[idx - 1]);
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+async function submitReview() {
+  const client = document.getElementById('sel-client').value;
+  const csm = document.getElementById('inp-csm').value.trim();
+  const errEl = document.getElementById('submit-error');
+  errEl.textContent = '';
+
+  if (!client) { errEl.textContent = 'Please select a client.'; return; }
+  if (!csm) { errEl.textContent = 'Please enter your name.'; return; }
+
+  const answered = CATS.reduce((a,c) => a + QUESTIONS[c].questions.filter(q => state.answers[q.id] !== undefined).length, 0);
+  if (answered < TOTAL_QS && !confirm(`${TOTAL_QS - answered} question(s) unanswered. Submit anyway?`)) return;
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try {
+    const scores = calcAllScores(state.answers);
+    await saveReview(client, csm, state.answers, scores);
+    document.getElementById('review-layout').style.display = 'none';
+    const ss = document.getElementById('success-state');
+    ss.style.display = 'flex';
+    document.getElementById('success-sub').textContent = `${client} · ${new Date().toLocaleDateString('en-GB')}`;
+  } catch(e) {
+    errEl.textContent = 'Submission failed: ' + e.message;
+    btn.disabled = false; btn.textContent = 'Submit Review';
+  }
+}
+
+function resetReview() {
+  state.answers = {};
+  state.activeCat = CATS[0];
+  document.getElementById('review-layout').style.display = 'flex';
+  document.getElementById('success-state').style.display = 'none';
+  document.getElementById('sel-client').value = '';
+  document.getElementById('inp-csm').value = '';
+  document.getElementById('btn-submit').disabled = false;
+  document.getElementById('btn-submit').textContent = 'Submit Review';
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
+}
+
+function onClientChange() {
+  const sel = document.getElementById('sel-client');
+  sel.className = sel.value ? '' : 'placeholder';
+}
+
+// ── CLIENT SELECT POPULATION ──────────────────────────────────────────────────
+function populateClientSelects() {
+  const selReview = document.getElementById('sel-client');
+  const selDash = document.getElementById('dash-client');
+  const cur = selReview.value;
+  selReview.innerHTML = '<option value="">Select client...</option>';
+  selDash.innerHTML = '<option value="">Select a client...</option>';
+  state.clients.forEach(c => {
+    selReview.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    selDash.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+  });
+  if (cur) selReview.value = cur;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function refreshDashClientSelect() { populateClientSelects(); }
+
+let radarChart = null, trendChart = null;
+
+async function loadDashboard() {
+  const client = document.getElementById('dash-client').value;
+  const content = document.getElementById('dashboard-content');
+  const reviewSel = document.getElementById('dash-review');
+
+  if (!client) {
+    content.innerHTML = '<div class="no-review-state">Select a client to view their embeddedness scores.</div>';
+    reviewSel.style.display = 'none';
+    return;
+  }
+
+  content.innerHTML = '<div class="loading-state"><span class="spinner"></span>Loading reviews...</div>';
+
+  try {
+    state.dashReviews = await fetchReviews(client);
+    if (state.dashReviews.length === 0) {
+      content.innerHTML = '<div class="no-review-state">No reviews submitted yet for this client.</div>';
+      reviewSel.style.display = 'none';
+      return;
+    }
+    reviewSel.style.display = 'inline-block';
+    reviewSel.innerHTML = state.dashReviews.map((r,i) =>
+      `<option value="${i}">${r.fields["Review Date"] || 'Review ' + (i+1)} — ${r.fields.CSM || 'Unknown'}</option>`
+    ).join('');
+    reviewSel.value = state.dashReviews.length - 1;
+    renderDashboard();
+  } catch(e) {
+    content.innerHTML = `<div class="no-review-state">Error loading reviews: ${e.message}</div>`;
+  }
+}
+
+function renderDashboard() {
+  const idx = parseInt(document.getElementById('dash-review').value);
+  const review = state.dashReviews[idx];
+  if (!review) return;
+  const f = review.fields;
+  const content = document.getElementById('dashboard-content');
+
+  // Score cards
+  let scoreCardsHTML = CATS.map(cat => {
+    const pct = Math.round((f[CAT_SCORE_FIELDS[cat]] || 0) * 100);
+    return `<div class="score-card">
+      <div class="score-value" style="color:${scoreColor(pct)}">${pct}%</div>
+      <div class="score-label">${CAT_SHORT[cat]}</div>
+    </div>`;
+  }).join('');
+
+  // Detail
+  let detailHTML = CATS.map(cat => {
+    const qs = QUESTIONS[cat].questions.map(q => {
+      const val = f[q.id];
+      const opt = val ? q.options.find(o => o.v === val) : null;
+      const comment = f[q.id + '_comment'];
+      return `<div class="detail-q">
+        <div class="detail-q-row">
+          <span class="detail-q-label">${q.label}</span>
+          ${opt ? `<span class="detail-q-pts">${opt.pts}pts</span>` : ''}
+        </div>
+        ${opt ? `<div class="detail-q-answer">${opt.label}</div>` : '<div class="detail-q-empty">Not answered</div>'}
+        ${comment ? `<div class="detail-q-comment">"${comment}"</div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div class="detail-cat">
+      <div class="detail-cat-name">${cat}</div>
+      ${qs}
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="score-grid">${scoreCardsHTML}</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Category Scores — Current Review</div>
+        <canvas id="radar-canvas" height="240"></canvas>
+      </div>
+      <div class="chart-card" id="trend-card">
+        <div class="chart-title">Score Development Over Time</div>
+        ${state.dashReviews.length > 1
+          ? '<canvas id="trend-canvas" height="240"></canvas>'
+          : '<div class="chart-placeholder"><div class="chart-placeholder-icon">📈</div><div class="chart-placeholder-text">Trend available after 2+ reviews</div></div>'}
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-title">Question Detail</div>
+      ${detailHTML}
+    </div>`;
+
+  // Radar chart
+  const radarCtx = document.getElementById('radar-canvas').getContext('2d');
+  new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: CATS.map(c => CAT_SHORT[c]),
+      datasets: [{
+        data: CATS.map(c => Math.round((f[CAT_SCORE_FIELDS[c]] || 0) * 100)),
+        backgroundColor: 'rgba(42,127,255,0.15)',
+        borderColor: 'rgba(42,127,255,0.8)',
+        borderWidth: 2,
+        pointBackgroundColor: '#2a7fff',
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min: 0, max: 100, ticks: { color: '#3a5570', stepSize: 25 }, grid: { color: '#1a3050' }, pointLabels: { color: '#5a7a96', font: { size: 11 } }, angleLines: { color: '#1a3050' } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Trend chart
+  if (state.dashReviews.length > 1) {
+    const trendCtx = document.getElementById('trend-canvas').getContext('2d');
+    const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
+    new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: state.dashReviews.map((r,i) => r.fields["Review Date"] || `Rev ${i+1}`),
+        datasets: CATS.map((cat, i) => ({
+          label: CAT_SHORT[cat],
+          data: state.dashReviews.map(r => Math.round((r.fields[CAT_SCORE_FIELDS[cat]] || 0) * 100)),
+          borderColor: colors[i], backgroundColor: 'transparent',
+          borderWidth: 2, pointRadius: 3, tension: 0.3
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } },
+          y: { min: 0, max: 100, ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } }
+        },
+        plugins: { legend: { labels: { color: '#5a7a96', font:{size:10}, boxWidth:12 } } }
+      }
+    });
+  }
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById('admin-modal').classList.add('open');
+  if (state.adminAuthed) {
+    showAdminMgmt();
+  } else {
+    document.getElementById('admin-login-screen').style.display = 'block';
+    document.getElementById('admin-mgmt-screen').style.display = 'none';
+    document.getElementById('modal-title').textContent = 'Admin Access';
+    setTimeout(() => document.getElementById('admin-pwd').focus(), 100);
+  }
+}
+
+function closeAdmin() {
+  document.getElementById('admin-modal').classList.remove('open');
+  document.getElementById('admin-pwd').value = '';
+  document.getElementById('admin-error').textContent = '';
+}
+
+function tryAdminLogin() {
+  const pwd = document.getElementById('admin-pwd').value;
+  if (pwd === ADMIN_PASSWORD) {
+    state.adminAuthed = true;
+    showAdminMgmt();
+  } else {
+    document.getElementById('admin-error').textContent = 'Incorrect password';
+    document.getElementById('admin-pwd').value = '';
+  }
+}
+
+async function showAdminMgmt() {
+  document.getElementById('admin-login-screen').style.display = 'none';
+  document.getElementById('admin-mgmt-screen').style.display = 'block';
+  document.getElementById('modal-title').textContent = 'Client Management';
+  await refreshClientList();
+}
+
+async function refreshClientList() {
+  const container = document.getElementById('client-list-container');
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span>Loading...</div>';
+  try {
+    await loadClients();
+    populateClientSelects();
+    if (state.clients.length === 0) {
+      container.innerHTML = '<div class="empty-state">No clients yet — add one above.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="client-list">' +
+      state.clients.map(c => `
+        <div class="client-item">
+          <div><div class="client-item-name">${c.name}</div><div class="client-item-csm">${c.csm}</div></div>
+          <button class="btn-remove" onclick="deleteClient('${c.id}','${c.name}')">Remove</button>
+        </div>`).join('') +
+      '</div>';
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`;
+  }
+}
+
+async function addClient() {
+  const name = document.getElementById('new-client-name').value.trim();
+  const csm = document.getElementById('new-csm-name').value.trim();
+  const errEl = document.getElementById('add-error');
+  errEl.textContent = '';
+  if (!name || !csm) { errEl.textContent = 'Both fields are required.'; return; }
+
+  const btn = document.getElementById('btn-add-client');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    await createClient(name, csm);
+    document.getElementById('new-client-name').value = '';
+    document.getElementById('new-csm-name').value = '';
+    await refreshClientList();
+  } catch(e) {
+    errEl.textContent = 'Failed: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Add';
+}
+
+async function deleteClient(id, name) {
+  if (!confirm(`Remove "${name}"?`)) return;
+  try {
+    await removeClient(id);
+    await refreshClientList();
+  } catch(e) {
+    alert('Failed to remove: ' + e.message);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function init() {
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
+  try {
+    await loadClients();
+    populateClientSelects();
+  } catch(e) {
+    console.warn('Could not load clients on init:', e.message);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
