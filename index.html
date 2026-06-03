@@ -6,7 +6,7 @@
 <title>Embeddedness Review Tool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
   :root {
     --bg: #05080f;
@@ -923,37 +923,118 @@ function populateClientSelects() {
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function refreshDashClientSelect() { populateClientSelects(); }
 
-let radarChart = null, trendChart = null;
+// ── SVG CHART HELPERS ─────────────────────────────────────────────────────────
+function makeRadarSVG(scores) {
+  const cats = Object.keys(CAT_SCORE_FIELDS);
+  const n = cats.length;
+  const cx = 200, cy = 200, r = 140;
+  const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
+  
+  // Axis points
+  const axes = cats.map((_, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  });
 
-async function loadDashboard() {
-  const client = document.getElementById('dash-client').value;
-  const content = document.getElementById('dashboard-content');
-  const reviewSel = document.getElementById('dash-review');
+  // Grid rings
+  let gridLines = '';
+  [25, 50, 75, 100].forEach(pct => {
+    const rr = r * pct / 100;
+    const pts = cats.map((_, i) => {
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
+    }).join(' ');
+    gridLines += `<polygon points="${pts}" fill="none" stroke="#1a3050" stroke-width="1"/>`;
+  });
 
-  if (!client) {
-    content.innerHTML = '<div class="no-review-state">Select a client to view their embeddedness scores.</div>';
-    reviewSel.style.display = 'none';
-    return;
-  }
+  // Axis lines
+  let axisLines = axes.map(a => `<line x1="${cx}" y1="${cy}" x2="${a.x}" y2="${a.y}" stroke="#1a3050" stroke-width="1"/>`).join('');
 
-  content.innerHTML = '<div class="loading-state"><span class="spinner"></span>Loading reviews...</div>';
+  // Data polygon
+  const dataPts = cats.map((cat, i) => {
+    const val = scores[cat] || 0;
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const rr = r * val;
+    return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
+  }).join(' ');
 
-  try {
-    state.dashReviews = await fetchReviews(client);
-    if (state.dashReviews.length === 0) {
-      content.innerHTML = '<div class="no-review-state">No reviews submitted yet for this client.</div>';
-      reviewSel.style.display = 'none';
-      return;
-    }
-    reviewSel.style.display = 'inline-block';
-    reviewSel.innerHTML = state.dashReviews.map((r,i) =>
-      `<option value="${i}">${r.fields["Review Date"] || 'Review ' + (i+1)} — ${r.fields.CSM || 'Unknown'}</option>`
-    ).join('');
-    reviewSel.value = state.dashReviews.length - 1;
-    renderDashboard();
-  } catch(e) {
-    content.innerHTML = `<div class="no-review-state">Error loading reviews: ${e.message}</div>`;
-  }
+  // Labels
+  const labels = cats.map((cat, i) => {
+    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const lr = r + 28;
+    const lx = cx + lr * Math.cos(angle);
+    const ly = cy + lr * Math.sin(angle);
+    const pct = Math.round((scores[cat] || 0) * 100);
+    const col = pct >= 75 ? '#1fd67a' : pct >= 50 ? '#f5a623' : '#f04b4b';
+    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>
+            <text x="${lx}" y="${ly + 13}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${col}" font-family="DM Mono,monospace" font-weight="500">${pct}%</text>`;
+  }).join('');
+
+  return `<svg width="400" height="400" viewBox="0 0 400 400" style="width:100%;max-width:400px;display:block;margin:0 auto">
+    ${gridLines}${axisLines}
+    <polygon points="${dataPts}" fill="rgba(42,127,255,0.15)" stroke="rgba(42,127,255,0.8)" stroke-width="2"/>
+    ${cats.map((cat, i) => {
+      const val = scores[cat] || 0;
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const rr = r * val;
+      return `<circle cx="${cx + rr * Math.cos(angle)}" cy="${cy + rr * Math.sin(angle)}" r="4" fill="#2a7fff"/>`;
+    }).join('')}
+    ${labels}
+  </svg>`;
+}
+
+function makeTrendSVG(reviews) {
+  if (reviews.length < 2) return '<div class="chart-placeholder"><div class="chart-placeholder-icon">📈</div><div class="chart-placeholder-text">Trend available after 2+ reviews</div></div>';
+  
+  const W = 500, H = 260, PAD = { top: 20, right: 20, bottom: 40, left: 35 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const cats = Object.keys(CAT_SCORE_FIELDS);
+  const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
+  const n = reviews.length;
+
+  const xPos = i => PAD.left + (i / (n - 1)) * plotW;
+  const yPos = v => PAD.top + plotH - (v / 100) * plotH;
+
+  // Grid lines
+  let grid = '';
+  [0, 25, 50, 75, 100].forEach(v => {
+    const y = yPos(v);
+    grid += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="#1a3050" stroke-width="1"/>`;
+    grid += `<text x="${PAD.left - 4}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#3a5570" font-family="DM Mono,sans-serif">${v}</text>`;
+  });
+
+  // X labels
+  let xLabels = reviews.map((r, i) => {
+    const label = (r.fields["Review Date"] || `Rev ${i+1}`).slice(0, 10);
+    return `<text x="${xPos(i)}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#5a7a96" font-family="Outfit,sans-serif">${label}</text>`;
+  }).join('');
+
+  // Lines
+  let lines = cats.map((cat, ci) => {
+    const pts = reviews.map((r, i) => {
+      const v = Math.round((r.fields[CAT_SCORE_FIELDS[cat]] || 0) * 100);
+      return `${xPos(i)},${yPos(v)}`;
+    }).join(' ');
+    const dots = reviews.map((r, i) => {
+      const v = Math.round((r.fields[CAT_SCORE_FIELDS[cat]] || 0) * 100);
+      return `<circle cx="${xPos(i)}" cy="${yPos(v)}" r="3" fill="${colors[ci]}"/>`;
+    }).join('');
+    return `<polyline points="${pts}" fill="none" stroke="${colors[ci]}" stroke-width="2"/>${dots}`;
+  }).join('');
+
+  // Legend
+  let legend = cats.map((cat, ci) => {
+    const lx = PAD.left + (ci % 4) * 115;
+    const ly = H + 15 + Math.floor(ci / 4) * 18;
+    return `<rect x="${lx}" y="${ly - 5}" width="10" height="10" rx="2" fill="${colors[ci]}"/>
+            <text x="${lx + 14}" y="${ly + 3}" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>`;
+  }).join('');
+
+  const totalH = H + 15 + Math.ceil(cats.length / 4) * 18 + 10;
+  return `<svg width="${W}" height="${totalH}" viewBox="0 0 ${W} ${totalH}" style="width:100%;display:block">
+    ${grid}${lines}${xLabels}${legend}
+  </svg>`;
 }
 
 function renderDashboard() {
@@ -963,8 +1044,12 @@ function renderDashboard() {
   const f = review.fields;
   const content = document.getElementById('dashboard-content');
 
+  // Scores object for radar
+  const scores = {};
+  Object.keys(CAT_SCORE_FIELDS).forEach(cat => { scores[cat] = f[CAT_SCORE_FIELDS[cat]] || 0; });
+
   // Score cards
-  let scoreCardsHTML = CATS.map(cat => {
+  let scoreCardsHTML = Object.keys(CAT_SCORE_FIELDS).map(cat => {
     const pct = Math.round((f[CAT_SCORE_FIELDS[cat]] || 0) * 100);
     return `<div class="score-card">
       <div class="score-value" style="color:${scoreColor(pct)}">${pct}%</div>
@@ -988,8 +1073,7 @@ function renderDashboard() {
       </div>`;
     }).join('');
     return `<div class="detail-cat">
-      <div class="detail-cat-name">${cat}</div>
-      ${qs}
+      <div class="detail-cat-name">${cat}</div>${qs}
     </div>`;
   }).join('');
 
@@ -998,70 +1082,17 @@ function renderDashboard() {
     <div class="charts-row">
       <div class="chart-card">
         <div class="chart-title">Category Scores — Current Review</div>
-        <canvas id="radar-canvas" height="240"></canvas>
+        ${makeRadarSVG(scores)}
       </div>
-      <div class="chart-card" id="trend-card">
+      <div class="chart-card">
         <div class="chart-title">Score Development Over Time</div>
-        ${state.dashReviews.length > 1
-          ? '<canvas id="trend-canvas" height="240"></canvas>'
-          : '<div class="chart-placeholder"><div class="chart-placeholder-icon">📈</div><div class="chart-placeholder-text">Trend available after 2+ reviews</div></div>'}
+        ${makeTrendSVG(state.dashReviews)}
       </div>
     </div>
     <div class="detail-card">
       <div class="detail-title">Question Detail</div>
       ${detailHTML}
     </div>`;
-
-  // Radar chart
-  const radarCtx = document.getElementById('radar-canvas').getContext('2d');
-  new Chart(radarCtx, {
-    type: 'radar',
-    data: {
-      labels: CATS.map(c => CAT_SHORT[c]),
-      datasets: [{
-        data: CATS.map(c => Math.round((f[CAT_SCORE_FIELDS[c]] || 0) * 100)),
-        backgroundColor: 'rgba(42,127,255,0.15)',
-        borderColor: 'rgba(42,127,255,0.8)',
-        borderWidth: 2,
-        pointBackgroundColor: '#2a7fff',
-        pointRadius: 3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: { r: { min: 0, max: 100, ticks: { color: '#3a5570', stepSize: 25 }, grid: { color: '#1a3050' }, pointLabels: { color: '#5a7a96', font: { size: 11 } }, angleLines: { color: '#1a3050' } } },
-      plugins: { legend: { display: false } }
-    }
-  });
-
-  // Trend chart
-  if (state.dashReviews.length > 1) {
-    const trendCtx = document.getElementById('trend-canvas').getContext('2d');
-    const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
-    new Chart(trendCtx, {
-      type: 'line',
-      data: {
-        labels: state.dashReviews.map((r,i) => r.fields["Review Date"] || `Rev ${i+1}`),
-        datasets: CATS.map((cat, i) => ({
-          label: CAT_SHORT[cat],
-          data: state.dashReviews.map(r => Math.round((r.fields[CAT_SCORE_FIELDS[cat]] || 0) * 100)),
-          borderColor: colors[i], backgroundColor: 'transparent',
-          borderWidth: 2, pointRadius: 3, tension: 0.3
-        }))
-      },
-      options: {
-        responsive: false,
-        animation: false,
-        width: document.getElementById('trend-canvas').parentElement.offsetWidth,
-        height: 240,
-        scales: {
-          x: { ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } },
-          y: { min: 0, max: 100, ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } }
-        },
-        plugins: { legend: { labels: { color: '#5a7a96', font:{size:10}, boxWidth:12 } } }
-      }
-    });
-  }
 }
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
