@@ -387,6 +387,37 @@
 
   .no-review-state { color: var(--muted); text-align: center; padding: 60px; font-size: 14px; }
 
+  /* Edit/delete buttons on review checkboxes */
+  .review-check-actions { display: flex; gap: 5px; margin-left: auto; }
+  .btn-edit-review {
+    background: none; border: 1px solid var(--border);
+    color: var(--accent-light); border-radius: 5px;
+    padding: 2px 9px; cursor: pointer; font-size: 11px;
+    font-family: var(--font-body); transition: all 0.15s;
+  }
+  .btn-edit-review:hover { background: var(--accent-glow); border-color: rgba(42,127,255,0.3); }
+  .btn-del-review {
+    background: none; border: 1px solid var(--border);
+    color: var(--red); border-radius: 5px;
+    padding: 2px 9px; cursor: pointer; font-size: 11px;
+    font-family: var(--font-body); transition: all 0.15s;
+  }
+  .btn-del-review:hover { background: rgba(240,75,75,0.08); border-color: var(--red); }
+
+  /* Edit mode banner in score entry */
+  .edit-banner {
+    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 8px; padding: 10px 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .edit-banner-text { color: var(--amber); font-size: 13px; font-weight: 500; }
+  .btn-cancel-edit {
+    background: none; border: 1px solid rgba(245,166,35,0.3);
+    color: var(--amber); border-radius: 6px; padding: 4px 12px;
+    cursor: pointer; font-size: 12px; font-family: var(--font-body);
+  }
+  .btn-cancel-edit:hover { background: rgba(245,166,35,0.1); }
+
   .review-check-label {
     display: flex; align-items: center; gap: 7px;
     background: var(--card); border: 1px solid var(--border);
@@ -442,6 +473,10 @@
             <label class="field-label">Review Name</label>
             <input type="text" id="inp-review-name" placeholder="e.g. Q2 2026">
           </div>
+        </div>
+        <div id="edit-banner" style="display:none" class="edit-banner">
+          <div class="edit-banner-text">✏ Editing existing review — changes will overwrite the saved record</div>
+          <button class="btn-cancel-edit" onclick="cancelEdit()">Cancel Edit</button>
         </div>
         <div id="questions-container"></div>
         <div class="nav-footer">
@@ -727,7 +762,8 @@ let state = {
   answers: {},
   clients: [],
   adminAuthed: false,
-  dashReviews: []
+  dashReviews: [],
+  editingRecordId: null  // null = new review, string = editing existing record
 };
 
 // ── AIRTABLE API ──────────────────────────────────────────────────────────────
@@ -774,6 +810,23 @@ async function fetchReviews(clientName) {
   const f = encodeURIComponent(`{Client}="${clientName}"`);
   const data = await atFetch("GET", `${SCORES_TABLE}?filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=asc`);
   return data.records || [];
+}
+
+async function deleteReview(recordId) {
+  return atFetch("DELETE", `${SCORES_TABLE}/${recordId}`);
+}
+
+async function updateReview(recordId, client, csm, reviewName, answers, scores) {
+  const fields = { Client: client, CSM: csm, "Review Date": new Date().toISOString().split("T")[0] };
+  if (reviewName) fields["Review Name"] = reviewName;
+  for (const cat of CATS) {
+    for (const q of QUESTIONS[cat].questions) {
+      if (answers[q.id] !== undefined) fields[q.id] = answers[q.id];
+      if (answers[q.id + "_c"]) fields[q.id + "_comment"] = answers[q.id + "_c"];
+    }
+    if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
+  }
+  return atFetch("PATCH", `${SCORES_TABLE}/${recordId}`, { fields });
 }
 
 // ── SCORING ───────────────────────────────────────────────────────────────────
@@ -992,6 +1045,68 @@ function prevCat() {
   if (idx > 0) switchCat(CATS[idx - 1]);
 }
 
+// ── EDIT / DELETE ─────────────────────────────────────────────────────────────
+function startEditReview(e, idx) {
+  e.preventDefault(); e.stopPropagation();
+  const review = state.dashReviews[idx];
+  if (!review) return;
+  const f = review.fields;
+
+  // Load answers from saved review back into state
+  state.answers = {};
+  for (const cat of CATS) {
+    for (const q of QUESTIONS[cat].questions) {
+      if (f[q.id] !== undefined) state.answers[q.id] = f[q.id];
+      if (f[q.id + '_comment']) state.answers[q.id + '_c'] = f[q.id + '_comment'];
+    }
+  }
+  state.editingRecordId = review.id;
+  state.activeCat = CATS[0];
+
+  // Populate form fields
+  document.getElementById('sel-client').value = f.Client || '';
+  document.getElementById('inp-csm').value = f.CSM || '';
+  document.getElementById('inp-review-name').value = f["Review Name"] || '';
+
+  // Show edit banner, switch to review tab
+  document.getElementById('edit-banner').style.display = 'flex';
+  document.getElementById('btn-submit').textContent = 'Save Changes';
+  showView('review');
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
+}
+
+function cancelEdit() {
+  state.editingRecordId = null;
+  state.answers = {};
+  document.getElementById('edit-banner').style.display = 'none';
+  document.getElementById('btn-submit').textContent = 'Submit Review';
+  document.getElementById('sel-client').value = '';
+  document.getElementById('inp-csm').value = '';
+  document.getElementById('inp-review-name').value = '';
+  state.activeCat = CATS[0];
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
+}
+
+async function confirmDeleteReview(e, idx) {
+  e.preventDefault(); e.stopPropagation();
+  const review = state.dashReviews[idx];
+  if (!review) return;
+  const label = review.fields["Review Name"] || review.fields["Review Date"] || `Review ${idx+1}`;
+  if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
+
+  try {
+    await deleteReview(review.id);
+    // Reload dashboard for this client
+    await loadDashboard();
+  } catch(e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
 // ── SUBMIT ────────────────────────────────────────────────────────────────────
 async function submitReview() {
   const client = document.getElementById('sel-client').value;
@@ -1006,27 +1121,39 @@ async function submitReview() {
   if (answered < TOTAL_QS && !confirm(`${TOTAL_QS - answered} question(s) unanswered. Submit anyway?`)) return;
 
   const btn = document.getElementById('btn-submit');
-  btn.disabled = true; btn.textContent = 'Submitting...';
+  btn.disabled = true; btn.textContent = state.editingRecordId ? 'Saving...' : 'Submitting...';
 
   try {
     const scores = calcAllScores(state.answers);
     const reviewName = document.getElementById('inp-review-name').value.trim();
-    await saveReview(client, csm, reviewName, state.answers, scores);
+
+    if (state.editingRecordId) {
+      await updateReview(state.editingRecordId, client, csm, reviewName, state.answers, scores);
+    } else {
+      await saveReview(client, csm, reviewName, state.answers, scores);
+    }
+
+    const wasEditing = !!state.editingRecordId;
+    state.editingRecordId = null;
+    document.getElementById('edit-banner').style.display = 'none';
     document.getElementById('review-layout').style.display = 'none';
     const ss = document.getElementById('success-state');
     ss.style.display = 'flex';
-    document.getElementById('success-sub').textContent = `${client} · ${new Date().toLocaleDateString('en-GB')}`;
+    document.getElementById('success-sub').textContent = `${client} · ${wasEditing ? 'Review updated' : new Date().toLocaleDateString('en-GB')}`;
   } catch(e) {
-    errEl.textContent = 'Submission failed: ' + e.message;
-    btn.disabled = false; btn.textContent = 'Submit Review';
+    errEl.textContent = 'Failed: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = state.editingRecordId ? 'Save Changes' : 'Submit Review';
   }
 }
 
 function resetReview() {
   state.answers = {};
   state.activeCat = CATS[0];
+  state.editingRecordId = null;
   document.getElementById('review-layout').style.display = 'flex';
   document.getElementById('success-state').style.display = 'none';
+  document.getElementById('edit-banner').style.display = 'none';
   document.getElementById('sel-client').value = '';
   document.getElementById('inp-csm').value = '';
   document.getElementById('inp-review-name').value = '';
@@ -1214,6 +1341,10 @@ async function loadDashboard() {
         <input type="checkbox" value="${i}" ${checked} onchange="renderDashboard()">
         <span class="review-check-name">${label}</span>
         <span class="review-check-csm">${csm}</span>
+        <span class="review-check-actions">
+          <button class="btn-edit-review" onclick="startEditReview(event, ${i})">Edit</button>
+          <button class="btn-del-review" onclick="confirmDeleteReview(event, ${i})">Delete</button>
+        </span>
       </label>`;
     }).join('');
     reviewSel.style.display = 'none';
