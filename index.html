@@ -109,13 +109,13 @@
   .btn-admin:hover { border-color: var(--border-light); color: var(--text); }
 
   /* ── LAYOUT ── */
-  .app { padding-top: 56px; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+  .app { padding-top: 56px; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; overflow: hidden; }
 
-  .view { display: none; flex: 1; overflow: hidden; min-height: 0; }
-  .view.active { display: flex; }
+  .view { display: none; flex: 1; min-height: 0; overflow: hidden; }
+  .view.active { display: flex; flex-direction: column; }
 
   /* ── REVIEW VIEW ── */
-  .review-layout { display: flex; flex: 1; overflow: hidden; }
+  .review-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
   .sidebar {
     width: 220px;
@@ -249,7 +249,7 @@
   .success-sub { color: var(--muted); font-size: 14px; }
 
   /* ── DASHBOARD ── */
-  .dashboard-panel { flex: 1; overflow-y: auto; padding: 28px 32px; height: 0; }
+  .dashboard-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
 
   .dashboard-controls { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
   .dashboard-controls select { max-width: 260px; }
