@@ -276,6 +276,7 @@
     background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 18px 20px;
   }
+  .chart-wrap { position: relative; height: 240px; width: 100%; }
   .chart-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
   .chart-placeholder {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1049,7 +1050,10 @@ function renderDashboard() {
         }))
       },
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: false,
+        animation: false,
+        width: document.getElementById('trend-canvas').parentElement.offsetWidth,
+        height: 240,
         scales: {
           x: { ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } },
           y: { min: 0, max: 100, ticks: { color: '#5a7a96', font:{size:10} }, grid: { color: '#1a3050' } }
