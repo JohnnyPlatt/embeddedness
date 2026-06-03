@@ -1037,6 +1037,37 @@ function makeTrendSVG(reviews) {
   </svg>`;
 }
 
+async function loadDashboard() {
+  const client = document.getElementById('dash-client').value;
+  const content = document.getElementById('dashboard-content');
+  const reviewSel = document.getElementById('dash-review');
+
+  if (!client) {
+    content.innerHTML = '<div class="no-review-state">Select a client to view their embeddedness scores.</div>';
+    reviewSel.style.display = 'none';
+    return;
+  }
+
+  content.innerHTML = '<div class="loading-state"><span class="spinner"></span>Loading reviews...</div>';
+
+  try {
+    state.dashReviews = await fetchReviews(client);
+    if (state.dashReviews.length === 0) {
+      content.innerHTML = '<div class="no-review-state">No reviews submitted yet for this client.</div>';
+      reviewSel.style.display = 'none';
+      return;
+    }
+    reviewSel.style.display = 'inline-block';
+    reviewSel.innerHTML = state.dashReviews.map((r, i) =>
+      `<option value="${i}">${r.fields["Review Date"] || 'Review ' + (i+1)} — ${r.fields.CSM || 'Unknown'}</option>`
+    ).join('');
+    reviewSel.value = state.dashReviews.length - 1;
+    renderDashboard();
+  } catch(e) {
+    content.innerHTML = `<div class="no-review-state">Error loading reviews: ${e.message}</div>`;
+  }
+}
+
 function renderDashboard() {
   const idx = parseInt(document.getElementById('dash-review').value);
   const review = state.dashReviews[idx];
