@@ -616,6 +616,11 @@
 
       <!-- Questions tab -->
       <div id="admin-tab-questions" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="color:var(--muted);font-size:12px">Manage scoring questions and sections</div>
+          <button class="btn-add" id="btn-seed" onclick="manualSeed()" style="font-size:12px;padding:6px 14px;background:var(--card);border:1px solid var(--border);color:var(--amber)">↺ Seed Default Questions</button>
+        </div>
+        <div id="seed-result" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;font-size:12px"></div>
         <div id="questions-admin-container">
           <div class="loading-state"><span class="spinner"></span>Loading questions...</div>
         </div>
@@ -897,7 +902,8 @@ async function seedQuestions() {
   }
   // Airtable max 10 records per POST
   for (let i = 0; i < records.length; i += 10) {
-    await atFetch("POST", QUESTIONS_TABLE, { records: records.slice(i, i+10) });
+    const result = await atFetch("POST", QUESTIONS_TABLE, { records: records.slice(i, i+10) });
+    console.log(`Seeded batch ${i/10 + 1}:`, JSON.stringify(result).substring(0, 200));
   }
 }
 
@@ -1583,6 +1589,33 @@ function renderDashboard() {
 // ── QUESTION ADMIN ───────────────────────────────────────────────────────────
 let allQuestionRecords = [];
 
+async function manualSeed() {
+  const btn = document.getElementById('btn-seed');
+  const result = document.getElementById('seed-result');
+  btn.disabled = true; btn.textContent = 'Seeding...';
+  result.style.display = 'none';
+  try {
+    // Check if already seeded
+    const existing = await loadAllQuestionRecords();
+    if (existing.length > 0) {
+      if (!confirm(`Questions table already has ${existing.length} records. Seed anyway (will add duplicates)?`)) {
+        btn.disabled = false; btn.textContent = '↺ Seed Default Questions';
+        return;
+      }
+    }
+    await seedQuestions();
+    await loadQuestions();
+    buildSidebar(); renderQuestions();
+    result.style.cssText = 'display:block;background:rgba(31,214,122,0.1);border:1px solid rgba(31,214,122,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);margin-bottom:12px';
+    result.textContent = '✓ Questions seeded successfully — ' + TOTAL_QS + ' questions loaded';
+    await renderQuestionsAdmin();
+  } catch(e) {
+    result.style.cssText = 'display:block;background:rgba(240,75,75,0.1);border:1px solid rgba(240,75,75,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:12px';
+    result.textContent = '✗ Seed failed: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '↺ Seed Default Questions';
+}
+
 function showAdminTab(tab) {
   document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('atab-' + tab).classList.add('active');
@@ -1979,10 +2012,16 @@ async function init() {
   try {
     await loadQuestions();
   } catch(e) {
+    console.error('loadQuestions failed:', e.message);
     // Fall back to seed questions if Airtable unavailable
     QUESTIONS = JSON.parse(JSON.stringify(SEED_QUESTIONS));
     refreshQuestionMeta();
-    console.warn('Could not load questions from Airtable, using seed data:', e.message);
+    // Show visible error for debugging
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#f04b4b;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;z-index:999;max-width:400px';
+    errDiv.textContent = 'Questions load error: ' + e.message;
+    document.body.appendChild(errDiv);
+    setTimeout(() => errDiv.remove(), 10000);
   }
   state.activeCat = CATS[0];
   buildSidebar();
