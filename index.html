@@ -345,6 +345,17 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .no-review-state { color: var(--muted); text-align: center; padding: 60px; font-size: 14px; }
+
+  .review-check-label {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 12px; cursor: pointer;
+    transition: border-color 0.15s; font-size: 13px;
+  }
+  .review-check-label:hover { border-color: var(--border-light); }
+  .review-check-label input { accent-color: var(--accent); cursor: pointer; }
+  .review-check-name { color: var(--text); font-weight: 500; }
+  .review-check-csm { color: var(--muted); font-size: 11px; }
 </style>
 </head>
 <body>
@@ -386,6 +397,10 @@
             <label class="field-label">Your Name</label>
             <input type="text" id="inp-csm" placeholder="Enter your name">
           </div>
+          <div class="field-group">
+            <label class="field-label">Review Name</label>
+            <input type="text" id="inp-review-name" placeholder="e.g. Q2 2026">
+          </div>
         </div>
         <div id="questions-container"></div>
         <div class="nav-footer">
@@ -417,6 +432,10 @@
           <option value="">Select a client...</option>
         </select>
         <select id="dash-review" style="max-width:280px;display:none" onchange="renderDashboard()"></select>
+      </div>
+      <div id="review-check-panel" style="display:none;flex-wrap:wrap;gap:8px;padding:0 32px 16px;align-items:center;">
+        <span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;margin-right:4px;">Compare:</span>
+        <div id="review-checks" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
       </div>
       <div id="dashboard-content">
         <div class="no-review-state">Select a client to view their embeddedness scores.</div>
@@ -697,8 +716,9 @@ async function removeClient(id) {
   return atFetch("DELETE", `${CLIENTS_TABLE}/${id}`);
 }
 
-async function saveReview(client, csm, answers, scores) {
+async function saveReview(client, csm, reviewName, answers, scores) {
   const fields = { Client: client, CSM: csm, "Review Date": new Date().toISOString().split("T")[0] };
+  if (reviewName) fields["Review Name"] = reviewName;
   for (const cat of CATS) {
     for (const q of QUESTIONS[cat].questions) {
       if (answers[q.id] !== undefined) fields[q.id] = answers[q.id];
@@ -876,7 +896,8 @@ async function submitReview() {
 
   try {
     const scores = calcAllScores(state.answers);
-    await saveReview(client, csm, state.answers, scores);
+    const reviewName = document.getElementById('inp-review-name').value.trim();
+    await saveReview(client, csm, reviewName, state.answers, scores);
     document.getElementById('review-layout').style.display = 'none';
     const ss = document.getElementById('success-state');
     ss.style.display = 'flex';
@@ -894,6 +915,7 @@ function resetReview() {
   document.getElementById('success-state').style.display = 'none';
   document.getElementById('sel-client').value = '';
   document.getElementById('inp-csm').value = '';
+  document.getElementById('inp-review-name').value = '';
   document.getElementById('btn-submit').disabled = false;
   document.getElementById('btn-submit').textContent = 'Submit Review';
   buildSidebar();
@@ -924,62 +946,71 @@ function populateClientSelects() {
 function refreshDashClientSelect() { populateClientSelects(); }
 
 // ── SVG CHART HELPERS ─────────────────────────────────────────────────────────
-function makeRadarSVG(scores) {
+function makeRadarSVG(reviews) {
   const cats = Object.keys(CAT_SCORE_FIELDS);
   const n = cats.length;
-  const cx = 200, cy = 200, r = 140;
-  const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
-  
-  // Axis points
-  const axes = cats.map((_, i) => {
-    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-  });
+  const cx = 200, cy = 185, r = 130;
+  const COLORS = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
+  const FILLS  = ['rgba(42,127,255,0.12)','rgba(31,214,122,0.1)','rgba(245,166,35,0.1)','rgba(167,139,250,0.1)','rgba(240,75,75,0.1)','rgba(6,182,212,0.1)','rgba(251,146,60,0.1)'];
 
   // Grid rings
   let gridLines = '';
-  [25, 50, 75, 100].forEach(pct => {
+  [25,50,75,100].forEach(pct => {
     const rr = r * pct / 100;
-    const pts = cats.map((_, i) => {
-      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-      return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
+    const pts = cats.map((_,i) => {
+      const a = (i/n)*2*Math.PI - Math.PI/2;
+      return `${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`;
     }).join(' ');
     gridLines += `<polygon points="${pts}" fill="none" stroke="#1a3050" stroke-width="1"/>`;
+    gridLines += `<text x="${cx+4}" y="${cy-rr+3}" font-size="8" fill="#1e3550" font-family="DM Mono,monospace">${pct}</text>`;
   });
 
   // Axis lines
-  let axisLines = axes.map(a => `<line x1="${cx}" y1="${cy}" x2="${a.x}" y2="${a.y}" stroke="#1a3050" stroke-width="1"/>`).join('');
-
-  // Data polygon
-  const dataPts = cats.map((cat, i) => {
-    const val = scores[cat] || 0;
-    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-    const rr = r * val;
-    return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
-  }).join(' ');
-
-  // Labels
-  const labels = cats.map((cat, i) => {
-    const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-    const lr = r + 28;
-    const lx = cx + lr * Math.cos(angle);
-    const ly = cy + lr * Math.sin(angle);
-    const pct = Math.round((scores[cat] || 0) * 100);
-    const col = pct >= 75 ? '#1fd67a' : pct >= 50 ? '#f5a623' : '#f04b4b';
-    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>
-            <text x="${lx}" y="${ly + 13}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${col}" font-family="DM Mono,monospace" font-weight="500">${pct}%</text>`;
+  const axisLines = cats.map((_,i) => {
+    const a = (i/n)*2*Math.PI - Math.PI/2;
+    return `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#1a3050" stroke-width="1"/>`;
   }).join('');
 
-  return `<svg width="400" height="400" viewBox="0 0 400 400" style="width:100%;max-width:400px;display:block;margin:0 auto">
-    ${gridLines}${axisLines}
-    <polygon points="${dataPts}" fill="rgba(42,127,255,0.15)" stroke="rgba(42,127,255,0.8)" stroke-width="2"/>
-    ${cats.map((cat, i) => {
-      const val = scores[cat] || 0;
-      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
-      const rr = r * val;
-      return `<circle cx="${cx + rr * Math.cos(angle)}" cy="${cy + rr * Math.sin(angle)}" r="4" fill="#2a7fff"/>`;
-    }).join('')}
-    ${labels}
+  // Data polygons — one per review
+  const polygons = reviews.map((rev, ri) => {
+    const f = rev.fields;
+    const pts = cats.map((cat,i) => {
+      const val = f[CAT_SCORE_FIELDS[cat]] || 0;
+      const a = (i/n)*2*Math.PI - Math.PI/2;
+      return `${cx+r*val*Math.cos(a)},${cy+r*val*Math.sin(a)}`;
+    }).join(' ');
+    const dots = cats.map((cat,i) => {
+      const val = f[CAT_SCORE_FIELDS[cat]] || 0;
+      const a = (i/n)*2*Math.PI - Math.PI/2;
+      return `<circle cx="${cx+r*val*Math.cos(a)}" cy="${cy+r*val*Math.sin(a)}" r="3" fill="${COLORS[ri]}"/>`;
+    }).join('');
+    return `<polygon points="${pts}" fill="${FILLS[ri]}" stroke="${COLORS[ri]}" stroke-width="2"/>${dots}`;
+  }).join('');
+
+  // Axis labels (use last selected review for pct colour)
+  const lastF = reviews[reviews.length-1].fields;
+  const labels = cats.map((cat,i) => {
+    const a = (i/n)*2*Math.PI - Math.PI/2;
+    const lr = r + 26;
+    const lx = cx + lr*Math.cos(a);
+    const ly = cy + lr*Math.sin(a);
+    const pct = Math.round((lastF[CAT_SCORE_FIELDS[cat]]||0)*100);
+    const col = pct>=75?'#1fd67a':pct>=50?'#f5a623':'#f04b4b';
+    return `<text x="${lx}" y="${ly-5}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${CAT_SHORT[cat]}</text>
+            <text x="${lx}" y="${ly+8}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${col}" font-family="DM Mono,monospace" font-weight="500">${pct}%</text>`;
+  }).join('');
+
+  // Legend for multiple reviews
+  const legendH = reviews.length > 1 ? reviews.length * 18 + 10 : 0;
+  const legend = reviews.length > 1 ? reviews.map((rev,ri) => {
+    const name = rev.fields["Review Name"] || rev.fields["Review Date"] || `Review ${ri+1}`;
+    return `<rect x="10" y="${390+ri*18}" width="12" height="12" rx="2" fill="${COLORS[ri]}"/>
+            <text x="26" y="${400+ri*18}" font-size="11" fill="#5a7a96" font-family="Outfit,sans-serif">${name}</text>`;
+  }).join('') : '';
+
+  const totalH = 390 + legendH;
+  return `<svg width="400" height="${totalH}" viewBox="0 0 400 ${totalH}" style="width:100%;max-width:400px;display:block;margin:0 auto">
+    ${gridLines}${axisLines}${polygons}${labels}${legend}
   </svg>`;
 }
 
@@ -1045,6 +1076,7 @@ async function loadDashboard() {
   if (!client) {
     content.innerHTML = '<div class="no-review-state">Select a client to view their embeddedness scores.</div>';
     reviewSel.style.display = 'none';
+    document.getElementById('review-check-panel').style.display = 'none';
     return;
   }
 
@@ -1058,10 +1090,20 @@ async function loadDashboard() {
       return;
     }
     reviewSel.style.display = 'inline-block';
-    reviewSel.innerHTML = state.dashReviews.map((r, i) =>
-      `<option value="${i}">${r.fields["Review Date"] || 'Review ' + (i+1)} — ${r.fields.CSM || 'Unknown'}</option>`
-    ).join('');
-    reviewSel.value = state.dashReviews.length - 1;
+    // Build checkbox list for multi-review radar
+    const checkContainer = document.getElementById('review-checks');
+    checkContainer.innerHTML = state.dashReviews.map((r, i) => {
+      const label = r.fields["Review Name"] || r.fields["Review Date"] || `Review ${i+1}`;
+      const csm = r.fields.CSM || '';
+      const checked = i === state.dashReviews.length - 1 ? 'checked' : '';
+      return `<label class="review-check-label">
+        <input type="checkbox" value="${i}" ${checked} onchange="renderDashboard()">
+        <span class="review-check-name">${label}</span>
+        <span class="review-check-csm">${csm}</span>
+      </label>`;
+    }).join('');
+    reviewSel.style.display = 'none';
+    document.getElementById('review-check-panel').style.display = 'flex';
     renderDashboard();
   } catch(e) {
     content.innerHTML = `<div class="no-review-state">Error loading reviews: ${e.message}</div>`;
@@ -1069,10 +1111,15 @@ async function loadDashboard() {
 }
 
 function renderDashboard() {
-  const idx = parseInt(document.getElementById('dash-review').value);
+  // Get selected review indices from checkboxes
+  const checked = [...document.querySelectorAll('#review-checks input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
+  if (checked.length === 0) return;
+  // Primary review is the last checked one for score cards and detail
+  const idx = checked[checked.length - 1];
   const review = state.dashReviews[idx];
   if (!review) return;
   const f = review.fields;
+  const selectedReviews = checked.map(i => state.dashReviews[i]);
   const content = document.getElementById('dashboard-content');
 
   // Scores object for radar
@@ -1113,7 +1160,7 @@ function renderDashboard() {
     <div class="charts-row">
       <div class="chart-card">
         <div class="chart-title">Category Scores — Current Review</div>
-        ${makeRadarSVG(scores)}
+        ${makeRadarSVG(selectedReviews)}
       </div>
       <div class="chart-card">
         <div class="chart-title">Score Development Over Time</div>
