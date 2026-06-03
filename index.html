@@ -5,25 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Embeddedness Review Tool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    --bg: #05080f;
-    --surface: #0d1520;
-    --card: #111d2e;
-    --border: #1a3050;
-    --border-light: #233d5a;
-    --text: #e8eef5;
-    --muted: #5a7a96;
-    --accent: #2a7fff;
-    --accent-glow: rgba(42, 127, 255, 0.15);
-    --accent-light: #82b8ff;
-    --green: #1fd67a;
-    --amber: #f5a623;
-    --red: #f04b4b;
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'Outfit', sans-serif;
+    --bg: #f2f0eb;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #e0ddd7;
+    --border-light: #ccc9c2;
+    --text: #21212b;
+    --muted: #7a7a8a;
+    --accent: #3694fc;
+    --accent-glow: rgba(54, 148, 252, 0.1);
+    --accent-light: #1a75e0;
+    --green: #00a878;
+    --amber: #d97706;
+    --red: #e8345a;
+    --font-display: 'Be Vietnam Pro', Arial, sans-serif;
+    --font-body: 'Be Vietnam Pro', Arial, sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
 
@@ -31,6 +31,7 @@
   
   body {
     font-family: var(--font-body);
+    font-weight: 300;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -43,8 +44,8 @@
     position: fixed;
     inset: 0;
     background-image: 
-      linear-gradient(rgba(42,127,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(42,127,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(54,148,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(54,148,252,0.04) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -54,7 +55,7 @@
   .header {
     position: fixed; top: 0; left: 0; right: 0;
     height: 56px;
-    background: rgba(5,8,15,0.95);
+    background: rgba(255,255,255,0.97);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
@@ -65,12 +66,12 @@
   .header-brand {
     font-family: var(--font-display);
     font-size: 16px;
-    font-weight: 800;
-    color: var(--accent-light);
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
   }
 
-  .header-brand span { color: var(--muted); font-weight: 400; }
+  .header-brand span { color: var(--accent); font-weight: 600; }
 
   .nav-tabs { display: flex; gap: 4px; }
 
@@ -90,7 +91,7 @@
   .nav-tab.active {
     background: var(--accent-glow);
     color: var(--accent-light);
-    border: 1px solid rgba(42,127,255,0.2);
+    border: 1px solid rgba(54,148,252,0.25);
   }
 
   .nav-tab:hover:not(.active) { color: var(--text); background: var(--card); }
@@ -119,7 +120,7 @@
 
   .sidebar {
     width: 220px;
-    background: rgba(13,21,32,0.8);
+    background: rgba(245,243,238,0.95);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -129,7 +130,7 @@
   }
 
   .sidebar-progress { padding: 16px 14px; border-bottom: 1px solid var(--border); }
-  .sidebar-progress-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
+  .sidebar-progress-label { color: var(--muted); font-size: 10px; text-transform: none; letter-spacing: 0.02em; margin-bottom: 8px; font-weight: 500; }
   .progress-bar { background: var(--card); border-radius: 2px; height: 4px; }
   .progress-fill { background: var(--accent); height: 100%; border-radius: 2px; transition: width 0.4s ease; }
   .progress-count { color: var(--muted); font-size: 11px; font-family: var(--font-mono); margin-top: 5px; }
@@ -144,7 +145,7 @@
     transition: background 0.15s;
   }
   .cat-btn:hover { background: var(--card); }
-  .cat-btn.active { background: var(--accent-glow); border: 1px solid rgba(42,127,255,0.15); }
+  .cat-btn.active { background: rgba(54,148,252,0.1); border: 1px solid rgba(54,148,252,0.25); }
 
   .cat-btn-row { display: flex; justify-content: space-between; align-items: center; }
   .cat-btn-name { font-size: 12px; font-weight: 500; color: var(--muted); }
@@ -156,16 +157,16 @@
   .main-panel { flex: 1; overflow-y: auto; padding: 28px 32px; height: 100%; }
 
   .panel-header { margin-bottom: 24px; }
-  .panel-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .panel-subtitle { color: var(--muted); font-size: 13px; }
+  .panel-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .panel-subtitle { color: var(--muted); font-size: 13px; font-weight: 300; }
 
   .client-row { display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
   .field-group { flex: 1; min-width: 170px; }
-  .field-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px; }
+  .field-label { color: var(--muted); font-size: 11px; text-transform: none; letter-spacing: 0.01em; display: block; margin-bottom: 6px; font-weight: 500; }
 
   select, input[type="text"], textarea {
     width: 100%;
-    background: var(--card);
+    background: #ffffff;
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 13px;
@@ -176,7 +177,7 @@
     transition: border-color 0.15s;
   }
   select:focus, input:focus, textarea:focus { border-color: rgba(42,127,255,0.4); }
-  select option { background: var(--card); }
+  select option { background: #ffffff; color: #21212b; }
   select.placeholder { color: var(--muted); }
 
   .q-card {
@@ -187,7 +188,7 @@
     margin-bottom: 14px;
     transition: border-color 0.2s;
   }
-  .q-card.answered { border-color: rgba(42,127,255,0.15); }
+  .q-card.answered { border-color: rgba(54,148,252,0.25); }
 
   .q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .q-label { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
@@ -201,7 +202,7 @@
   input[type="range"] {
     -webkit-appearance: none; appearance: none;
     width: 100%; height: 4px; border-radius: 2px;
-    background: var(--border); outline: none;
+    background: var(--border); outline: none; cursor: pointer;
     border: none; padding: 0; cursor: pointer;
     transition: background 0.2s;
   }
@@ -237,10 +238,10 @@
 
   .slider-descriptor {
     min-height: 38px; padding: 8px 12px;
-    background: rgba(42,127,255,0.05);
-    border-left: 2px solid var(--accent);
+    background: rgba(54,148,252,0.07);
+    border-left: 3px solid var(--accent);
     border-radius: 0 6px 6px 0;
-    color: var(--accent-light); font-size: 13px;
+    color: #21212b; font-size: 13px; font-weight: 400;
     margin-bottom: 10px;
     transition: all 0.15s;
   }
@@ -308,7 +309,7 @@
   }
   .score-card:hover { border-color: var(--border-light); }
   .score-value { font-family: var(--font-mono); font-size: 28px; font-weight: 500; }
-  .score-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+  .score-label { color: var(--muted); font-size: 10px; text-transform: none; letter-spacing: 0.02em; margin-top: 4px; font-weight: 500; }
 
   .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
   @media (max-width: 800px) { .charts-row { grid-template-columns: 1fr; } }
@@ -318,7 +319,7 @@
     border-radius: 10px; padding: 18px 20px;
   }
   .chart-wrap { position: relative; height: 240px; width: 100%; }
-  .chart-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+  .chart-title { color: var(--muted); font-size: 11px; text-transform: none; letter-spacing: 0.01em; margin-bottom: 14px; font-weight: 500; }
   .chart-placeholder {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     height: 200px; color: var(--muted); gap: 8px;
@@ -327,9 +328,9 @@
   .chart-placeholder-text { font-size: 13px; }
 
   .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 22px; }
-  .detail-title { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+  .detail-title { color: var(--muted); font-size: 11px; text-transform: none; letter-spacing: 0.01em; margin-bottom: 16px; font-weight: 500; }
   .detail-cat { margin-bottom: 18px; }
-  .detail-cat-name { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .detail-cat-name { color: var(--accent); font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0.01em; margin-bottom: 8px; }
   .detail-q { background: var(--bg); border-radius: 7px; padding: 10px 13px; margin-bottom: 6px; }
   .detail-q-row { display: flex; justify-content: space-between; }
   .detail-q-label { color: #94aec4; font-size: 12px; }
@@ -341,7 +342,7 @@
   /* ── MODAL ── */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.8); z-index: 100;
+    background: rgba(33,33,43,0.6); z-index: 100;
     align-items: center; justify-content: center;
   }
   .modal-overlay.open { display: flex; }
@@ -352,7 +353,7 @@
     width: 480px; max-height: 80vh; overflow-y: auto;
   }
   .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+  .modal-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; }
   .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; }
   .modal-close:hover { color: var(--text); }
 
@@ -463,7 +464,7 @@
 
   /* Edit mode banner in score entry */
   .edit-banner {
-    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
+    background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.25);
     border-radius: 8px; padding: 10px 16px; margin-bottom: 20px;
     display: flex; justify-content: space-between; align-items: center;
   }
@@ -491,7 +492,7 @@
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-brand">Embeddedness <span>Review</span></div>
+  <div class="header-brand">Embeddedness <span>review</span></div>
   <nav class="nav-tabs">
     <button class="nav-tab active" onclick="showView('review')">Score Entry</button>
     <button class="nav-tab" onclick="showView('dashboard')">Dashboard</button>
@@ -1016,9 +1017,9 @@ function calcAllScores(answers) {
 }
 
 function scoreColor(pct) {
-  if (pct >= 75) return "var(--green)";
-  if (pct >= 50) return "var(--amber)";
-  return "var(--red)";
+  if (pct >= 75) return "#00a878";
+  if (pct >= 50) return "#d97706";
+  return "#e8345a";
 }
 
 // ── VIEW SWITCHING ────────────────────────────────────────────────────────────
@@ -1359,8 +1360,8 @@ function makeRadarSVG(reviews) {
   const cats = Object.keys(CAT_SCORE_FIELDS);
   const n = cats.length;
   const cx = 200, cy = 185, r = 130;
-  const COLORS = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
-  const FILLS  = ['rgba(42,127,255,0.12)','rgba(31,214,122,0.1)','rgba(245,166,35,0.1)','rgba(167,139,250,0.1)','rgba(240,75,75,0.1)','rgba(6,182,212,0.1)','rgba(251,146,60,0.1)'];
+  const COLORS = ['#3694fc','#00e2a0','#36ead0','#6100ff','#ff5b8a','#025afb','#fbbf24'];
+  const FILLS  = ['rgba(54,148,252,0.12)','rgba(0,226,160,0.1)','rgba(54,234,208,0.1)','rgba(97,0,255,0.1)','rgba(255,91,138,0.1)','rgba(2,90,251,0.1)','rgba(251,191,36,0.1)'];
 
   // Grid rings
   let gridLines = '';
@@ -1370,14 +1371,14 @@ function makeRadarSVG(reviews) {
       const a = (i/n)*2*Math.PI - Math.PI/2;
       return `${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`;
     }).join(' ');
-    gridLines += `<polygon points="${pts}" fill="none" stroke="#1a3050" stroke-width="1"/>`;
-    gridLines += `<text x="${cx+4}" y="${cy-rr+3}" font-size="8" fill="#1e3550" font-family="DM Mono,monospace">${pct}</text>`;
+    gridLines += `<polygon points="${pts}" fill="none" stroke="#e0ddd7" stroke-width="1"/>`;
+    gridLines += `<text x="${cx+4}" y="${cy-rr+3}" font-size="8" fill="#ccc9c2" font-family="DM Mono,monospace">${pct}</text>`;
   });
 
   // Axis lines
   const axisLines = cats.map((_,i) => {
     const a = (i/n)*2*Math.PI - Math.PI/2;
-    return `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#1a3050" stroke-width="1"/>`;
+    return `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#e0ddd7" stroke-width="1"/>`;
   }).join('');
 
   // Data polygons — one per review
@@ -1404,8 +1405,8 @@ function makeRadarSVG(reviews) {
     const lx = cx + lr*Math.cos(a);
     const ly = cy + lr*Math.sin(a);
     const pct = Math.round((lastF[CAT_SCORE_FIELDS[cat]]||0)*100);
-    const col = pct>=75?'#1fd67a':pct>=50?'#f5a623':'#f04b4b';
-    return `<text x="${lx}" y="${ly-5}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>
+    const col = pct>=75?'#00a878':pct>=50?'#d97706':'#e8345a';
+    return `<text x="${lx}" y="${ly-5}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#7a7a8a" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>
             <text x="${lx}" y="${ly+8}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${col}" font-family="DM Mono,monospace" font-weight="500">${pct}%</text>`;
   }).join('');
 
@@ -1414,7 +1415,7 @@ function makeRadarSVG(reviews) {
   const legend = reviews.length > 1 ? reviews.map((rev,ri) => {
     const name = rev.fields["Review Name"] || rev.fields["Review Date"] || `Review ${ri+1}`;
     return `<rect x="10" y="${390+ri*18}" width="12" height="12" rx="2" fill="${COLORS[ri]}"/>
-            <text x="26" y="${400+ri*18}" font-size="11" fill="#5a7a96" font-family="Outfit,sans-serif">${name}</text>`;
+            <text x="26" y="${400+ri*18}" font-size="11" fill="#7a7a8a" font-family="Outfit,sans-serif">${name}</text>`;
   }).join('') : '';
 
   const totalH = 390 + legendH;
@@ -1430,7 +1431,7 @@ function makeTrendSVG(reviews) {
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
   const cats = Object.keys(CAT_SCORE_FIELDS);
-  const colors = ['#2a7fff','#1fd67a','#f5a623','#a78bfa','#f04b4b','#06b6d4','#fb923c'];
+  const colors = ['#3694fc','#00e2a0','#36ead0','#6100ff','#ff5b8a','#025afb','#fbbf24'];
   const n = reviews.length;
 
   const xPos = i => PAD.left + (i / (n - 1)) * plotW;
@@ -1440,14 +1441,14 @@ function makeTrendSVG(reviews) {
   let grid = '';
   [0, 25, 50, 75, 100].forEach(v => {
     const y = yPos(v);
-    grid += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="#1a3050" stroke-width="1"/>`;
-    grid += `<text x="${PAD.left - 4}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#3a5570" font-family="DM Mono,sans-serif">${v}</text>`;
+    grid += `<line x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}" stroke="#e0ddd7" stroke-width="1"/>`;
+    grid += `<text x="${PAD.left - 4}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#7a7a8a" font-family="DM Mono,sans-serif">${v}</text>`;
   });
 
   // X labels
   let xLabels = reviews.map((r, i) => {
     const label = (r.fields["Review Date"] || `Rev ${i+1}`).slice(0, 10);
-    return `<text x="${xPos(i)}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#5a7a96" font-family="Outfit,sans-serif">${label}</text>`;
+    return `<text x="${xPos(i)}" y="${H - 8}" text-anchor="middle" font-size="9" fill="#7a7a8a" font-family="Outfit,sans-serif">${label}</text>`;
   }).join('');
 
   // Lines
@@ -1468,7 +1469,7 @@ function makeTrendSVG(reviews) {
     const lx = PAD.left + (ci % 4) * 115;
     const ly = H + 15 + Math.floor(ci / 4) * 18;
     return `<rect x="${lx}" y="${ly - 5}" width="10" height="10" rx="2" fill="${colors[ci]}"/>
-            <text x="${lx + 14}" y="${ly + 3}" font-size="10" fill="#5a7a96" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>`;
+            <text x="${lx + 14}" y="${ly + 3}" font-size="10" fill="#7a7a8a" font-family="Outfit,sans-serif">${getCatShort(cat)}</text>`;
   }).join('');
 
   const totalH = H + 15 + Math.ceil(cats.length / 4) * 18 + 10;
