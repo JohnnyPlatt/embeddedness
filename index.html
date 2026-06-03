@@ -109,13 +109,13 @@
   .btn-admin:hover { border-color: var(--border-light); color: var(--text); }
 
   /* ── LAYOUT ── */
-  .app { padding-top: 56px; height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; overflow: hidden; }
+  .app { padding-top: 56px; min-height: 100vh; position: relative; z-index: 1; }
 
-  .view { display: none; flex: 1; min-height: 0; overflow: hidden; }
-  .view.active { display: flex; flex-direction: column; }
+  .view { display: none; }
+  .view.active { display: block; }
 
   /* ── REVIEW VIEW ── */
-  .review-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+  .review-layout { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 
   .sidebar {
     width: 220px;
@@ -125,6 +125,7 @@
     flex-direction: column;
     flex-shrink: 0;
     overflow-y: auto;
+    height: 100%;
   }
 
   .sidebar-progress { padding: 16px 14px; border-bottom: 1px solid var(--border); }
@@ -152,7 +153,7 @@
   .cat-progress { color: #1e3550; font-size: 10px; margin-top: 2px; font-family: var(--font-mono); }
 
   /* ── MAIN PANEL ── */
-  .main-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .main-panel { flex: 1; overflow-y: auto; padding: 28px 32px; height: 100%; }
 
   .panel-header { margin-bottom: 24px; }
   .panel-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
@@ -249,7 +250,7 @@
   .success-sub { color: var(--muted); font-size: 14px; }
 
   /* ── DASHBOARD ── */
-  .dashboard-panel { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .dashboard-panel { padding: 28px 32px; }
 
   .dashboard-controls { display: flex; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
   .dashboard-controls select { max-width: 260px; }
