@@ -3072,14 +3072,32 @@ async function loadOverview() {
     // Fetch all score records, get latest per client
     const enc = encodeURIComponent('NOT({Client} = "")');
     const f = encodeURIComponent(`OR({Deleted}=FALSE(), {Deleted}=BLANK())`);
-    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Created%20Time&sort[0][direction]=desc`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
     const records = data.records || [];
 
     // Build map of clientName -> latest review
+    // For same date, prefer record with Overall_Score populated
     const latestMap = {};
     for (const r of records) {
       const client = r.fields.Client;
-      if (client && !latestMap[client]) latestMap[client] = r.fields;
+      if (!client) continue;
+      if (!latestMap[client]) {
+        latestMap[client] = r.fields;
+      } else {
+        const existing = latestMap[client];
+        const existingDate = existing["Review Date"] || '';
+        const newDate = r.fields["Review Date"] || '';
+        // If same date, prefer the one with Overall_Score
+        if (newDate === existingDate) {
+          if (r.fields["Overall_Score"] !== undefined && existing["Overall_Score"] === undefined) {
+            latestMap[client] = r.fields;
+          }
+        }
+        // If newer date, always replace (records are sorted desc so this shouldn't happen, but safety check)
+        else if (newDate > existingDate) {
+          latestMap[client] = r.fields;
+        }
+      }
     }
     ovState.allReviews = latestMap;
 
