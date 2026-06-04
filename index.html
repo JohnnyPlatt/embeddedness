@@ -486,6 +486,95 @@
   .btn-add-section { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-size: 12px; width: 100%; margin-bottom: 14px; }
   .btn-add-section:hover { border-color: var(--green); color: var(--green); }
 
+  /* ── START SCREEN ── */
+  .start-screen {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+  .start-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 36px 40px; width: 100%; max-width: 480px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+  .start-card-title {
+    font-size: 22px; font-weight: 600; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .start-card-subtitle {
+    font-size: 13px; color: var(--muted); font-weight: 300;
+    margin-bottom: 28px;
+  }
+  .start-field { margin-bottom: 20px; }
+
+  .start-region-btns { display: flex; gap: 6px; }
+  .start-region-btn {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 0; cursor: pointer;
+    font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    color: var(--muted); transition: all 0.15s;
+  }
+  .start-region-btn:hover { color: var(--text); border-color: var(--border-light); }
+  .start-region-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .start-search-wrap { position: relative; }
+  .start-search-wrap input { width: 100%; }
+  .start-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 20; max-height: 240px; overflow-y: auto;
+  }
+  .start-dropdown-item {
+    padding: 10px 14px; cursor: pointer; border-radius: 7px; margin: 3px;
+    transition: background 0.12s;
+  }
+  .start-dropdown-item:hover { background: var(--accent-glow); }
+  .start-dropdown-item-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .start-dropdown-item-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .start-dropdown-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .start-selected {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--accent-glow); border: 1px solid rgba(54,148,252,0.25);
+    border-radius: 8px; padding: 10px 14px; margin-top: 6px;
+  }
+  .start-selected-name { font-size: 14px; font-weight: 600; color: var(--accent-light); }
+  .start-selected-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .start-selected-clear {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 0 4px;
+    transition: color 0.15s;
+  }
+  .start-selected-clear:hover { color: var(--red); }
+
+  .btn-start-review {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: var(--accent); color: #fff;
+    font-family: var(--font-body); font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; margin-top: 8px;
+    letter-spacing: 0.01em;
+  }
+  .btn-start-review:hover:not(:disabled) { background: #1a75e0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(54,148,252,0.3); }
+  .btn-start-review:disabled { background: var(--border); color: var(--muted); cursor: default; transform: none; box-shadow: none; }
+
+  /* Review context bar */
+  .review-context-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--accent-glow); border: 1px solid rgba(54,148,252,0.2);
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 20px;
+  }
+  .review-context-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .review-context-client { font-size: 14px; font-weight: 700; color: var(--accent-light); }
+  .review-context-sep { color: var(--border-light); }
+  .review-context-csm { font-size: 13px; color: var(--muted); }
+  .review-context-review { font-size: 13px; color: var(--muted); font-style: italic; }
+  .review-context-change {
+    background: none; border: 1px solid rgba(54,148,252,0.25); color: var(--muted);
+    border-radius: 6px; padding: 4px 12px; cursor: pointer; font-size: 12px;
+    font-family: var(--font-body); transition: all 0.15s; flex-shrink: 0;
+  }
+  .review-context-change:hover { color: var(--text); border-color: var(--border-light); }
+
   /* ── EXPORT BUTTONS ── */
   .btn-export {
     background: var(--card); border: 1px solid var(--border);
@@ -741,7 +830,54 @@
 
   <!-- REVIEW VIEW -->
   <div class="view active" id="view-review">
-    <div class="review-layout" id="review-layout">
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="start-screen">
+      <div class="start-card">
+        <div class="start-card-title">New embeddedness review</div>
+        <div class="start-card-subtitle">Select your client and enter your details to begin</div>
+
+        <!-- Region filter -->
+        <div class="start-field">
+          <label class="field-label">Region</label>
+          <div class="start-region-btns">
+            <button class="start-region-btn active" onclick="setStartRegion('all', this)">All</button>
+            <button class="start-region-btn" onclick="setStartRegion('EMEA', this)">EMEA</button>
+            <button class="start-region-btn" onclick="setStartRegion('NA', this)">NA</button>
+          </div>
+        </div>
+
+        <!-- Client search -->
+        <div class="start-field">
+          <label class="field-label">Client</label>
+          <div class="start-search-wrap">
+            <input type="text" id="start-client-search" placeholder="Search clients..." oninput="filterStartClients()" autocomplete="off">
+            <div id="start-client-dropdown" class="start-dropdown" style="display:none"></div>
+          </div>
+          <div id="start-client-selected" class="start-selected" style="display:none"></div>
+        </div>
+
+        <!-- CSM name -->
+        <div class="start-field">
+          <label class="field-label">Your name</label>
+          <input type="text" id="inp-csm" placeholder="Enter your name" oninput="updateStartButton()">
+        </div>
+
+        <!-- Review name -->
+        <div class="start-field">
+          <label class="field-label">Review name <span style="color:var(--muted);font-weight:300">(optional)</span></label>
+          <input type="text" id="inp-review-name" placeholder="e.g. Q2 2026">
+        </div>
+
+        <div class="error-msg" id="start-error" style="margin-bottom:8px"></div>
+        <button class="btn-start-review" id="btn-start-review" onclick="startReview()" disabled>
+          Start review →
+        </button>
+      </div>
+    </div>
+
+    <!-- SCORING FORM -->
+    <div class="review-layout" id="review-layout" style="display:none">
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="sidebar-progress">
@@ -753,21 +889,16 @@
       </div>
       <!-- Main -->
       <div class="main-panel" id="main-panel">
-        <div class="client-row">
-          <div class="field-group">
-            <label class="field-label">Client</label>
-            <select id="sel-client" class="placeholder" onchange="onClientChange()">
-              <option value="">Select client...</option>
-            </select>
+        <!-- Client context bar -->
+        <div class="review-context-bar" id="review-context-bar">
+          <div class="review-context-info">
+            <span class="review-context-client" id="ctx-client-name"></span>
+            <span class="review-context-sep">·</span>
+            <span class="review-context-csm" id="ctx-csm-name"></span>
+            <span class="review-context-sep" id="ctx-review-sep" style="display:none">·</span>
+            <span class="review-context-review" id="ctx-review-name"></span>
           </div>
-          <div class="field-group">
-            <label class="field-label">Your Name</label>
-            <input type="text" id="inp-csm" placeholder="Enter your name">
-          </div>
-          <div class="field-group">
-            <label class="field-label">Review Name</label>
-            <input type="text" id="inp-review-name" placeholder="e.g. Q2 2026">
-          </div>
+          <button class="review-context-change" onclick="returnToStartScreen()">Change client</button>
         </div>
         <div id="edit-banner" style="display:none" class="edit-banner">
           <div class="edit-banner-text">✏ Editing existing review — changes will overwrite the saved record</div>
@@ -792,12 +923,13 @@
         </div>
       </div>
     </div>
+
     <!-- Success state -->
     <div class="success-state" id="success-state" style="display:none">
       <div class="success-icon">✓</div>
-      <div class="success-title">Review Submitted</div>
+      <div class="success-title">Review submitted</div>
       <div class="success-sub" id="success-sub"></div>
-      <button class="btn btn-primary" style="margin-top:12px" onclick="resetReview()">Start New Review</button>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="resetReview()">Start new review</button>
     </div>
   </div>
 
@@ -1344,7 +1476,7 @@ function renderQuestions() {
 
   const hdr = document.createElement('div');
   hdr.className = 'panel-header';
-  const clientName = document.getElementById('sel-client').value;
+  const clientName = startState?.selectedClient?.name || '';
   const clientSuffix = clientName ? ` <span style="color:var(--muted);font-weight:300">— ${clientName}</span>` : '';
   let subtitle = 'Drag the slider to the position that best fits the current state for this client.';
   if (hasPrev) subtitle += ` <span style="color:var(--amber);font-size:12px">▲ markers show ${prevLabel}</span>`;
@@ -1560,7 +1692,7 @@ function clearDraftLocally(clientName) {
 }
 
 async function saveProgress() {
-  const client = document.getElementById('sel-client').value;
+  const client = startState.selectedClient?.name || document.getElementById('sel-client')?.value || '';
   const csm = document.getElementById('inp-csm').value.trim();
   const errEl = document.getElementById('submit-error');
   errEl.textContent = '';
@@ -1636,14 +1768,27 @@ function startEditReview(e, idx) {
   state.editingRecordId = review.id;
   state.activeCat = CATS[0];
 
-  // Populate form fields
-  document.getElementById('sel-client').value = f.Client || '';
+  // Set client in startState
+  const clientObj = state.clients.find(c => c.name === f.Client) || { name: f.Client || '', id: '', csm: f.CSM || '', region: '' };
+  startState.selectedClient = clientObj;
+
   document.getElementById('inp-csm').value = f.CSM || '';
   document.getElementById('inp-review-name').value = f["Review Name"] || '';
 
-  // Show edit banner, switch to review tab
+  // Update context bar
+  document.getElementById('ctx-client-name').textContent = clientObj.name;
+  document.getElementById('ctx-csm-name').textContent = f.CSM || '';
+  const rName = f["Review Name"] || '';
+  document.getElementById('ctx-review-name').textContent = rName;
+  document.getElementById('ctx-review-sep').style.display = rName ? 'inline' : 'none';
+
+  // Show scoring form directly, bypassing start screen
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('review-layout').style.display = 'flex';
+  document.getElementById('success-state').style.display = 'none';
   document.getElementById('edit-banner').style.display = 'flex';
   document.getElementById('btn-submit').textContent = 'Save Changes';
+
   showView('review');
   buildSidebar();
   renderQuestions();
@@ -1653,12 +1798,17 @@ function startEditReview(e, idx) {
 function cancelEdit() {
   state.editingRecordId = null;
   state.answers = {};
+  startState.selectedClient = null;
   document.getElementById('edit-banner').style.display = 'none';
   document.getElementById('btn-submit').textContent = 'Submit Review';
-  document.getElementById('sel-client').value = '';
   document.getElementById('inp-csm').value = '';
   document.getElementById('inp-review-name').value = '';
+  document.getElementById('start-client-selected').style.display = 'none';
+  document.getElementById('start-client-search').value = '';
   state.activeCat = CATS[0];
+  document.getElementById('start-screen').style.display = 'flex';
+  document.getElementById('review-layout').style.display = 'none';
+  updateStartButton();
   buildSidebar();
   renderQuestions();
   updateNavButtons();
@@ -1682,7 +1832,7 @@ async function confirmDeleteReview(e, idx) {
 
 // ── SUBMIT ────────────────────────────────────────────────────────────────────
 async function submitReview() {
-  const client = document.getElementById('sel-client').value;
+  const client = startState.selectedClient?.name || document.getElementById('sel-client')?.value || '';
   const csm = document.getElementById('inp-csm').value.trim();
   const errEl = document.getElementById('submit-error');
   errEl.textContent = '';
@@ -1728,23 +1878,131 @@ function resetReview() {
   state.activeCat = CATS[0];
   state.editingRecordId = null;
   state.draftRecordId = null;
-  document.getElementById('review-layout').style.display = 'flex';
+  startState.selectedClient = null;
+
+  // Return to start screen
+  document.getElementById('start-screen').style.display = 'flex';
+  document.getElementById('review-layout').style.display = 'none';
   document.getElementById('success-state').style.display = 'none';
   document.getElementById('edit-banner').style.display = 'none';
-  document.getElementById('sel-client').value = '';
+
+  // Clear start screen fields
+  document.getElementById('start-client-selected').style.display = 'none';
+  document.getElementById('start-client-search').value = '';
   document.getElementById('inp-csm').value = '';
   document.getElementById('inp-review-name').value = '';
   document.getElementById('btn-submit').disabled = false;
   document.getElementById('btn-submit').textContent = 'Submit Review';
+  updateStartButton();
   buildSidebar();
   renderQuestions();
   updateNavButtons();
 }
 
-async function onClientChange() {
-  const sel = document.getElementById('sel-client');
-  sel.className = sel.value ? '' : 'placeholder';
-  const clientName = sel.value;
+// ── START SCREEN ─────────────────────────────────────────────────────────────
+let startState = {
+  region: 'all',
+  selectedClient: null  // { id, name, csm, region }
+};
+
+function setStartRegion(region, btn) {
+  startState.region = region;
+  document.querySelectorAll('.start-region-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  startState.selectedClient = null;
+  document.getElementById('start-client-search').value = '';
+  document.getElementById('start-client-selected').style.display = 'none';
+  document.getElementById('start-client-dropdown').style.display = 'none';
+  updateStartButton();
+}
+
+function filterStartClients() {
+  const search = document.getElementById('start-client-search').value.toLowerCase().trim();
+  const dropdown = document.getElementById('start-client-dropdown');
+
+  const filtered = state.clients.filter(c => {
+    const matchRegion = startState.region === 'all' || c.region === startState.region;
+    const matchSearch = !search || c.name.toLowerCase().includes(search) || (c.csm||'').toLowerCase().includes(search);
+    return matchRegion && matchSearch;
+  });
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = '<div class="start-dropdown-empty">No clients found</div>';
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  dropdown.innerHTML = filtered.map(c => `
+    <div class="start-dropdown-item" onclick="selectStartClient('${c.id}')">
+      <div class="start-dropdown-item-name">${c.name}</div>
+      <div class="start-dropdown-item-meta">${[c.region, c.csm].filter(Boolean).join(' · ')}</div>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+}
+
+function selectStartClient(clientId) {
+  const client = state.clients.find(c => c.id === clientId);
+  if (!client) return;
+  startState.selectedClient = client;
+
+  // Hide search, show selected pill
+  document.getElementById('start-client-search').value = '';
+  document.getElementById('start-client-dropdown').style.display = 'none';
+  const selectedEl = document.getElementById('start-client-selected');
+  selectedEl.style.display = 'flex';
+  selectedEl.innerHTML = `
+    <div>
+      <div class="start-selected-name">${client.name}</div>
+      <div class="start-selected-meta">${[client.region, client.csm].filter(Boolean).join(' · ')}</div>
+    </div>
+    <button class="start-selected-clear" onclick="clearStartClient()">×</button>`;
+  updateStartButton();
+}
+
+function clearStartClient() {
+  startState.selectedClient = null;
+  document.getElementById('start-client-selected').style.display = 'none';
+  document.getElementById('start-client-search').value = '';
+  updateStartButton();
+}
+
+function updateStartButton() {
+  const csm = document.getElementById('inp-csm').value.trim();
+  const btn = document.getElementById('btn-start-review');
+  if (btn) btn.disabled = !(startState.selectedClient && csm);
+}
+
+async function startReview() {
+  const client = startState.selectedClient;
+  const csm = document.getElementById('inp-csm').value.trim();
+  if (!client || !csm) return;
+
+  // Set context bar
+  document.getElementById('ctx-client-name').textContent = client.name;
+  document.getElementById('ctx-csm-name').textContent = csm;
+  const reviewName = document.getElementById('inp-review-name').value.trim();
+  if (reviewName) {
+    document.getElementById('ctx-review-name').textContent = reviewName;
+    document.getElementById('ctx-review-sep').style.display = 'inline';
+  }
+
+  // Hide start screen, show scoring form
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('review-layout').style.display = 'flex';
+  document.getElementById('success-state').style.display = 'none';
+
+  // Trigger client change logic (loads prev answers)
+  await onClientChange(client.name);
+}
+
+function returnToStartScreen() {
+  document.getElementById('start-screen').style.display = 'flex';
+  document.getElementById('review-layout').style.display = 'none';
+  document.getElementById('success-state').style.display = 'none';
+}
+
+// ── CLIENT CHANGE ─────────────────────────────────────────────────────────────
+async function onClientChange(clientName) {
   state.prevAnswers = {};
   if (!clientName) return;
 
@@ -1787,16 +2045,13 @@ async function onClientChange() {
 
 // ── CLIENT SELECT POPULATION ──────────────────────────────────────────────────
 function populateClientSelects() {
-  const selReview = document.getElementById('sel-client');
   const selDash = document.getElementById('dash-client');
-  const cur = selReview.value;
-  selReview.innerHTML = '<option value="">Select client...</option>';
-  selDash.innerHTML = '<option value="">Select a client...</option>';
-  state.clients.forEach(c => {
-    selReview.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-    selDash.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-  });
-  if (cur) selReview.value = cur;
+  if (selDash) {
+    selDash.innerHTML = '<option value="">Select a client...</option>';
+    state.clients.forEach(c => {
+      selDash.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    });
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -2927,13 +3182,24 @@ async function startUpdateFromOverview(clientName) {
     }
   } catch(e) { console.warn('Could not fetch record id:', e); }
 
-  // Set client and switch to score entry
+  // Set up start state and show scoring form
+  const clientObj = state.clients.find(c => c.name === clientName) || { name: clientName, id: '', csm: '', region: '' };
+  startState.selectedClient = clientObj;
   state.activeCat = CATS[0];
-  document.getElementById('sel-client').value = clientName;
+
   document.getElementById('inp-csm').value = fields.CSM || '';
   document.getElementById('inp-review-name').value = '';
+
+  document.getElementById('ctx-client-name').textContent = clientName;
+  document.getElementById('ctx-csm-name').textContent = fields.CSM || '';
+  document.getElementById('ctx-review-name').textContent = '';
+  document.getElementById('ctx-review-sep').style.display = 'none';
+
   document.getElementById('edit-banner').style.display = 'none';
   document.getElementById('btn-submit').textContent = 'Submit Review';
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('review-layout').style.display = 'flex';
+  document.getElementById('success-state').style.display = 'none';
 
   showView('review');
   buildSidebar();
