@@ -1385,7 +1385,7 @@ async function saveReview(client, csm, reviewName, answers, scores) {
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
-  if (scores._overall !== undefined) fields["Overall_Score"] = Math.round(scores._overall * 100);
+  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
   return atFetch("POST", SCORES_TABLE, { records: [{ fields }] });
 }
 
@@ -1409,7 +1409,7 @@ async function updateReview(recordId, client, csm, reviewName, answers, scores) 
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
-  if (scores._overall !== undefined) fields["Overall_Score"] = Math.round(scores._overall * 100);
+  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
   return atFetch("PATCH", `${SCORES_TABLE}/${recordId}`, { fields });
 }
 
@@ -1428,11 +1428,13 @@ function calcScore(cat, answers) {
 function calcAllScores(answers) {
   const s = {};
   CATS.forEach(c => { s[c] = calcScore(c, answers); });
-  // Overall = (BC×3 + Vol + Eng + Adv + Diff + TH + Con) / 8
+  // Overall = (BC×3 + Vol + Eng + Adv + Diff + TH + Con) / 9
+  // Dividing by 9 (max possible numerator) normalises to 0-1 range
+  // so a perfect score always = 100%
   const bc = s["Business Case"] || 0;
   const overall = (bc*3 + (s["Journey Volumes"]||0) + (s["Engagement"]||0) +
     (s["Advocacy"]||0) + (s["Differentiators"]||0) + (s["Technical Health"]||0) +
-    (s["Contractual"]||0)) / 8;
+    (s["Contractual"]||0)) / 9;
   s._overall = Math.round(overall * 100) / 100;
   return s;
 }
@@ -1442,7 +1444,7 @@ function calcOverallFromFields(fields) {
   const bc = fields["BC_Score"] || 0;
   const overall = (bc*3 + (fields["Vol_Score"]||0) + (fields["Eng_Score"]||0) +
     (fields["Adv_Score"]||0) + (fields["Diff_Score"]||0) + (fields["TH_Score"]||0) +
-    (fields["Con_Score"]||0)) / 8;
+    (fields["Con_Score"]||0)) / 9;
   return Math.round(overall * 100);
 }
 
@@ -2348,7 +2350,7 @@ function renderDashboard() {
 
   // Score cards — overall first, then categories
   const overallPct = f["Overall_Score"] !== undefined
-    ? Math.round(f["Overall_Score"])
+    ? Math.round(f["Overall_Score"] <= 1 ? f["Overall_Score"] * 100 : f["Overall_Score"])
     : calcOverallFromFields(f);
   const overallCard = `<div class="score-card" style="border-color:${scoreColor(overallPct)};border-width:2px">
     <div class="score-value" style="color:${scoreColor(overallPct)};font-size:32px">${overallPct}%</div>
@@ -3075,12 +3077,6 @@ async function loadOverview() {
     const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
     const records = data.records || [];
 
-    console.log('Overview: fetched', records.length, 'records');
-    if (records.length > 0) {
-      console.log('First record fields:', JSON.stringify(Object.keys(records[0].fields)));
-      console.log('First record Overall_Score:', records[0].fields['Overall_Score']);
-      console.log('First record client:', records[0].fields['Client']);
-    }
     // Build map of clientName -> latest review
     // For same date, prefer record with Overall_Score populated
     const latestMap = {};
@@ -3126,14 +3122,12 @@ async function loadOverview() {
 
 function getOverallScore(fields) {
   if (!fields) return 0;
-  // Use stored Overall_Score if available (stored as 0-100 integer)
   if (fields["Overall_Score"] !== undefined && fields["Overall_Score"] !== null) {
-    console.log('getOverallScore: using stored value', fields["Overall_Score"], 'for', fields["Client"]);
-    return Math.round(fields["Overall_Score"]);
+    const v = fields["Overall_Score"];
+    // Handle both decimal (0-1) and integer (0-100) storage
+    return Math.round(v <= 1 ? v * 100 : v);
   }
-  const calc = calcOverallFromFields(fields);
-  console.log('getOverallScore: calculated', calc, 'for', fields["Client"], 'BC_Score=', fields["BC_Score"]);
-  return calc;
+  return calcOverallFromFields(fields);
 }
 
 function updateSummaryCards() {
