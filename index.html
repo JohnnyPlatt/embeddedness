@@ -194,6 +194,39 @@
   .q-label { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
   .q-weight { color: #1e3550; font-size: 10px; font-family: var(--font-mono); margin-left: 10px; flex-shrink: 0; }
 
+  /* Previous score indicators */
+  .prev-marker-wrap { position: relative; height: 10px; margin-top: 2px; }
+  .prev-marker {
+    position: absolute; transform: translateX(-50%);
+    width: 2px; height: 8px; border-radius: 1px;
+    background: var(--amber); opacity: 0.7;
+  }
+  .prev-marker::after {
+    content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid var(--amber);
+    opacity: 0.7;
+  }
+  .prev-descriptor {
+    padding: 7px 12px; margin-bottom: 10px;
+    background: rgba(217,119,6,0.06);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 6px 6px 0;
+    font-size: 12px; font-weight: 300;
+  }
+  .prev-descriptor-label { color: var(--amber); font-size: 10px; font-weight: 600; margin-bottom: 2px; }
+  .prev-descriptor-text { color: var(--muted); }
+  .prev-descriptor-pts { color: var(--muted); font-size: 10px; font-family: var(--font-mono); margin-top: 2px; }
+  .prev-change {
+    display: inline-block; margin-left: 8px;
+    font-size: 10px; font-weight: 600; font-family: var(--font-mono);
+  }
+  .prev-change.up { color: var(--green); }
+  .prev-change.down { color: var(--red); }
+  .prev-change.same { color: var(--muted); }
+
   /* Slider styles */
   .slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
   
@@ -1067,6 +1100,7 @@ async function archiveQuestionRecord(recordId) {
 let state = {
   activeCat: CATS[0],
   answers: {},
+  prevAnswers: {},       // last review's answers for reference display
   clients: [],
   adminAuthed: false,
   dashReviews: [],
@@ -1219,10 +1253,14 @@ function renderQuestions() {
 
   const cat = state.activeCat;
   const qs = QUESTIONS[cat].questions;
+  const hasPrev = Object.keys(state.prevAnswers).length > 0;
+  const prevLabel = state.prevAnswers._reviewName || 'last review';
 
   const hdr = document.createElement('div');
   hdr.className = 'panel-header';
-  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">Drag the slider to the position that best fits the current state for this client.</div>`;
+  let subtitle = 'Drag the slider to the position that best fits the current state for this client.';
+  if (hasPrev) subtitle += ` <span style="color:var(--amber);font-size:12px">▲ markers show ${prevLabel}</span>`;
+  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">${subtitle}</div>`;
   container.appendChild(hdr);
 
   qs.forEach(q => {
@@ -1234,18 +1272,48 @@ function renderQuestions() {
     const max = q.options.length;
     const curVal = state.answers[q.id] !== undefined ? state.answers[q.id] : 0;
     const curOpt = curVal ? q.options.find(o => o.v === curVal) : null;
+    const prevVal = state.prevAnswers[q.id];
+    const prevOpt = prevVal ? q.options.find(o => o.v === prevVal) : null;
 
     // Step markers
-    const steps = q.options.map((opt, i) =>
+    const steps = q.options.map(opt =>
       `<span class="slider-step${curVal === opt.v ? ' active' : ''}">${opt.v}</span>`
     ).join('');
 
-    // Descriptor text
+    // Previous marker position on track (as % of track width)
+    let prevMarkerHTML = '';
+    if (prevVal) {
+      const pct = ((prevVal - 1) / (max - 1)) * 100;
+      prevMarkerHTML = `<div class="prev-marker-wrap">
+        <div class="prev-marker" style="left:calc(${pct}% + ${10 - pct * 0.2}px)"></div>
+      </div>`;
+    }
+
+    // Current descriptor
     const descText = curOpt ? curOpt.label : 'Move the slider to select…';
     const descPts = curOpt ? `${curOpt.pts} points` : '';
     const descClass = curOpt ? 'slider-descriptor' : 'slider-descriptor unanswered';
     const badgeClass = curOpt ? 'slider-badge' : 'slider-badge unanswered';
     const badgeText = curOpt ? `${curVal}/${max}` : '–';
+
+    // Previous descriptor
+    let prevDescHTML = '';
+    if (prevOpt) {
+      let changeHTML = '';
+      if (curVal && curVal !== prevVal) {
+        const dir = curVal > prevVal ? 'up' : 'down';
+        const arrow = curVal > prevVal ? '↑' : '↓';
+        const diff = Math.abs(curVal - prevVal);
+        changeHTML = `<span class="prev-change ${dir}">${arrow} ${diff}</span>`;
+      } else if (curVal && curVal === prevVal) {
+        changeHTML = `<span class="prev-change same">= no change</span>`;
+      }
+      prevDescHTML = `<div class="prev-descriptor" id="prev-desc-${q.id}">
+        <div class="prev-descriptor-label">${prevLabel} ${changeHTML}</div>
+        <div class="prev-descriptor-text">${prevOpt.label}</div>
+        <div class="prev-descriptor-pts">${prevOpt.pts} points</div>
+      </div>`;
+    }
 
     card.innerHTML = `
       <div class="q-header">
@@ -1256,6 +1324,7 @@ function renderQuestions() {
         <div class="slider-track">
           <input type="range" id="slider-${q.id}" min="1" max="${max}" step="1" value="${curVal || 1}"
             oninput="onSliderMove('${q.id}')" onchange="onSliderCommit('${q.id}')">
+          ${prevMarkerHTML}
           <div class="slider-steps">${steps}</div>
         </div>
         <div class="${badgeClass}" id="badge-${q.id}">${badgeText}</div>
@@ -1264,10 +1333,10 @@ function renderQuestions() {
         <div id="desc-text-${q.id}">${descText}</div>
         <div class="slider-pts" id="desc-pts-${q.id}">${descPts}</div>
       </div>
+      ${prevDescHTML}
       <textarea class="q-comment" placeholder="Add context or notes (optional)..." oninput="setComment('${q.id}', this.value)">${state.answers[q.id+'_c'] || ''}</textarea>`;
     container.appendChild(card);
 
-    // Set slider track fill colour
     if (curVal) updateSliderFill(q.id, curVal, max);
   });
 }
@@ -1306,6 +1375,24 @@ function onSliderMove(qid) {
   // Update step markers
   const steps = document.querySelectorAll(`#qcard-${qid} .slider-step`);
   steps.forEach((s, i) => s.classList.toggle('active', i + 1 === val));
+
+  // Update change indicator vs previous score
+  const prevVal = state.prevAnswers[qid];
+  const prevDescEl = document.getElementById('prev-desc-' + qid);
+  if (prevVal && prevDescEl) {
+    const labelEl = prevDescEl.querySelector('.prev-descriptor-label');
+    const prevLabel = state.prevAnswers._reviewName || 'last review';
+    let changeHTML = '';
+    if (val !== prevVal) {
+      const dir = val > prevVal ? 'up' : 'down';
+      const arrow = val > prevVal ? '↑' : '↓';
+      const diff = Math.abs(val - prevVal);
+      changeHTML = `<span class="prev-change ${dir}">${arrow} ${diff}</span>`;
+    } else {
+      changeHTML = `<span class="prev-change same">= no change</span>`;
+    }
+    labelEl.innerHTML = `${prevLabel} ${changeHTML}`;
+  }
 }
 
 function onSliderCommit(qid) {
@@ -1463,6 +1550,7 @@ async function submitReview() {
 
 function resetReview() {
   state.answers = {};
+  state.prevAnswers = {};
   state.activeCat = CATS[0];
   state.editingRecordId = null;
   document.getElementById('review-layout').style.display = 'flex';
@@ -1478,9 +1566,34 @@ function resetReview() {
   updateNavButtons();
 }
 
-function onClientChange() {
+async function onClientChange() {
   const sel = document.getElementById('sel-client');
   sel.className = sel.value ? '' : 'placeholder';
+  const clientName = sel.value;
+  state.prevAnswers = {};
+  if (!clientName) return;
+
+  // Load latest review for this client to show as reference
+  try {
+    const enc = encodeURIComponent(`{Client}="${clientName}"`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?filterByFormula=${enc}&sort[0][field]=Review%20Date&sort[0][direction]=desc&maxRecords=1`);
+    const rec = data.records?.[0];
+    if (rec) {
+      const f = rec.fields;
+      for (const cat of CATS) {
+        for (const q of QUESTIONS[cat].questions) {
+          if (f[q.id] !== undefined) state.prevAnswers[q.id] = f[q.id];
+          if (f[q.id + '_comment']) state.prevAnswers[q.id + '_c'] = f[q.id + '_comment'];
+        }
+      }
+      state.prevAnswers._reviewName = f["Review Name"] || f["Review Date"] || "last review";
+    }
+  } catch(e) {
+    console.warn("Could not load previous answers:", e.message);
+  }
+
+  // Re-render questions to show previous markers
+  renderQuestions();
 }
 
 // ── CLIENT SELECT POPULATION ──────────────────────────────────────────────────
