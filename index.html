@@ -2349,9 +2349,9 @@ function renderDashboard() {
   Object.keys(CAT_SCORE_FIELDS).forEach(cat => { scores[cat] = f[CAT_SCORE_FIELDS[cat]] || 0; });
 
   // Score cards — overall first, then categories
-  const overallPct = f["Overall_Score"] !== undefined
-    ? Math.round(f["Overall_Score"] <= 1 ? f["Overall_Score"] * 100 : f["Overall_Score"])
-    : calcOverallFromFields(f);
+  // Always calculate from category scores for accuracy
+  // (stored Overall_Score may be from old format or missing)
+  const overallPct = calcOverallFromFields(f);
   const overallCard = `<div class="score-card" style="border-color:${scoreColor(overallPct)};border-width:2px">
     <div class="score-value" style="color:${scoreColor(overallPct)};font-size:32px">${overallPct}%</div>
     <div class="score-label" style="font-weight:600;color:var(--text)">Overall</div>
