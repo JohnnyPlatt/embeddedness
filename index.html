@@ -854,6 +854,11 @@
         <div class="add-client-row">
           <input type="text" id="new-client-name" placeholder="Client name">
           <input type="text" id="new-csm-name" placeholder="CSM owner">
+          <select id="new-client-region" style="flex:0 0 90px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 10px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
+            <option value="">Region</option>
+            <option value="EMEA">EMEA</option>
+            <option value="NA">NA</option>
+          </select>
           <button class="btn-add" id="btn-add-client" onclick="addClient()">Add</button>
         </div>
         <div class="error-msg" id="add-error"></div>
@@ -1199,7 +1204,8 @@ async function atFetch(method, path, body) {
 }
 
 async function loadClients() {
-  const data = await atFetch("GET", `${CLIENTS_TABLE}?maxRecords=200&sort[0][field]=Client%20Name&sort[0][direction]=asc`);
+  const f = encodeURIComponent(`OR({Deleted}=FALSE(), {Deleted}=BLANK())`);
+  const data = await atFetch("GET", `${CLIENTS_TABLE}?maxRecords=200&filterByFormula=${f}&sort[0][field]=Client%20Name&sort[0][direction]=asc`);
   state.clients = (data.records || []).map(r => ({
     id: r.id,
     name: r.fields["Client Name"] || "",
@@ -1209,12 +1215,14 @@ async function loadClients() {
   return state.clients;
 }
 
-async function createClient(name, csm) {
-  return atFetch("POST", CLIENTS_TABLE, { records: [{ fields: { "Client Name": name, "CSM Owner": csm } }] });
+async function createClient(name, csm, region) {
+  const fields = { "Client Name": name, "CSM Owner": csm };
+  if (region) fields["Region"] = region;
+  return atFetch("POST", CLIENTS_TABLE, { records: [{ fields }] });
 }
 
 async function removeClient(id) {
-  return atFetch("DELETE", `${CLIENTS_TABLE}/${id}`);
+  return atFetch("PATCH", `${CLIENTS_TABLE}/${id}`, { fields: { "Deleted": true } });
 }
 
 async function saveReview(client, csm, reviewName, answers, scores) {
@@ -1231,13 +1239,13 @@ async function saveReview(client, csm, reviewName, answers, scores) {
 }
 
 async function fetchReviews(clientName) {
-  const f = encodeURIComponent(`{Client}="${clientName}"`);
+  const f = encodeURIComponent(`AND({Client}="${clientName}", OR({Deleted}=FALSE(), {Deleted}=BLANK()))`);
   const data = await atFetch("GET", `${SCORES_TABLE}?filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=asc`);
   return data.records || [];
 }
 
 async function deleteReview(recordId) {
-  return atFetch("DELETE", `${SCORES_TABLE}/${recordId}`);
+  return atFetch("PATCH", `${SCORES_TABLE}/${recordId}`, { fields: { "Deleted": true } });
 }
 
 async function updateReview(recordId, client, csm, reviewName, answers, scores) {
@@ -1661,7 +1669,7 @@ async function confirmDeleteReview(e, idx) {
   const review = state.dashReviews[idx];
   if (!review) return;
   const label = review.fields["Review Name"] || review.fields["Review Date"] || `Review ${idx+1}`;
-  if (!confirm(`Delete "${label}"? This cannot be undone.`)) return;
+  if (!confirm(`Archive "${label}"? It will be hidden from the tool but can be restored in Airtable.`)) return;
 
   try {
     await deleteReview(review.id);
@@ -2466,7 +2474,7 @@ async function refreshClientList() {
       state.clients.map(c => `
         <div class="client-item">
           <div><div class="client-item-name">${c.name}</div><div class="client-item-csm">${c.csm}${c.region ? ' · ' + c.region : ''}</div></div>
-          <button class="btn-remove" onclick="deleteClient('${c.id}','${c.name}')">Remove</button>
+          <button class="btn-remove" onclick="deleteClient('${c.id}','${c.name}')">Archive</button>
         </div>`).join('') +
       '</div>';
   } catch(e) {
@@ -2477,17 +2485,19 @@ async function refreshClientList() {
 async function addClient() {
   const name = document.getElementById('new-client-name').value.trim();
   const csm = document.getElementById('new-csm-name').value.trim();
+  const region = document.getElementById('new-client-region').value;
   const errEl = document.getElementById('add-error');
   errEl.textContent = '';
-  if (!name || !csm) { errEl.textContent = 'Both fields are required.'; return; }
+  if (!name || !csm) { errEl.textContent = 'Client name and CSM owner are required.'; return; }
 
   const btn = document.getElementById('btn-add-client');
   btn.disabled = true; btn.textContent = '...';
 
   try {
-    await createClient(name, csm);
+    await createClient(name, csm, region);
     document.getElementById('new-client-name').value = '';
     document.getElementById('new-csm-name').value = '';
+    document.getElementById('new-client-region').value = '';
     await refreshClientList();
   } catch(e) {
     errEl.textContent = 'Failed: ' + e.message;
@@ -2496,7 +2506,7 @@ async function addClient() {
 }
 
 async function deleteClient(id, name) {
-  if (!confirm(`Remove "${name}"?`)) return;
+  if (!confirm(`Archive "${name}"? They will be hidden from the tool but can be restored in Airtable.`)) return;
   try {
     await removeClient(id);
     await refreshClientList();
@@ -2706,7 +2716,8 @@ async function loadOverview() {
   try {
     // Fetch all score records, get latest per client
     const enc = encodeURIComponent('NOT({Client} = "")');
-    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
+    const f = encodeURIComponent(`OR({Deleted}=FALSE(), {Deleted}=BLANK())`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
     const records = data.records || [];
 
     // Build map of clientName -> latest review
