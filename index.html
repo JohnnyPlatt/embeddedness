@@ -511,12 +511,14 @@
 
   .comment-box {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px;
+    border-radius: 8px; padding: 12px 14px;
     border-left: 3px solid var(--accent);
   }
   .comment-box-cat {
-    font-size: 10px; font-weight: 600; color: var(--accent-light);
-    text-transform: none; margin-bottom: 5px; letter-spacing: 0.01em;
+    display: inline-block;
+    font-size: 10px; font-weight: 700; color: var(--accent-light);
+    background: var(--accent-glow); border-radius: 4px;
+    padding: 2px 8px; margin-bottom: 8px; letter-spacing: 0.01em;
   }
   .comment-box-items { display: flex; flex-direction: column; gap: 6px; }
   .comment-box-item {}
@@ -1798,13 +1800,14 @@ function makeRadarSVG(reviews) {
   const n = cats.length;
   const cx = 200, cy = 185, r = 130;
 
-  // Most recent = NiCE Blue, older = grey shades getting lighter
+  // Most recent = NiCE Blue, older = grey — oldest is lightest, more recent = darker
   function reviewColor(ri, total, isFill) {
     if (ri === total - 1) return isFill ? 'rgba(54,148,252,0.12)' : '#3694fc';
-    // Older reviews: grey, lighter as older
-    const greyStep = total > 2 ? Math.floor(ri * (180 / (total-2))) : 160;
-    const g = Math.min(200, 80 + greyStep);
-    return isFill ? `rgba(${g},${g},${g},0.12)` : `rgb(${g},${g},${g})`;
+    // Older reviews: ri=0 is oldest (lightest), ri=total-2 is most recent grey (darkest)
+    const greyCount = total - 1; // number of grey reviews
+    // Map ri (0=oldest) to grey value: oldest=210 (light), newest grey=120 (dark)
+    const g = greyCount <= 1 ? 180 : Math.round(210 - (ri / (greyCount - 1)) * 90);
+    return isFill ? `rgba(${g},${g},${g},0.15)` : `rgb(${g},${g},${g})`;
   }
 
   // Grid rings
@@ -2578,38 +2581,39 @@ function buildExportSVG(radarSvgEl, clientName, reviewLabel, catComments) {
   // Build comment column SVGs
   function buildCommentCol(cats, startX, colW) {
     let svg = '';
-    let cy = headerH + padding;
+    let cy = headerH + padding + 16; // Extra top padding below header
     for (const cat of cats) {
       const items = catComments[cat];
       if (!items) continue;
       const accentColor = CAT_COLOURS[cat] || '#3694fc';
-      // Category label
-      svg += `<rect x="${startX}" y="${cy}" width="${colW}" height="14" rx="3" fill="${accentColor}" opacity="0.15"/>`;
-      svg += `<text x="${startX+6}" y="${cy+10}" font-size="10" font-weight="700" fill="${accentColor}" font-family="Arial,sans-serif">${escSVG(cat)}</text>`;
-      cy += 18;
+      // Category label — pill width matches text, not full column
+      const catLabelW = Math.min(colW, cat.length * 7 + 16);
+      svg += `<rect x="${startX}" y="${cy}" width="${catLabelW}" height="16" rx="4" fill="${accentColor}" opacity="0.18"/>`;
+      svg += `<text x="${startX+8}" y="${cy+11}" font-size="10" font-weight="700" fill="${accentColor}" font-family="Arial,sans-serif">${escSVG(cat)}</text>`;
+      cy += 24; // Space after category header
       for (const item of items) {
-        // Question (shortened)
-        const qShort = item.label.length > 30 ? item.label.substring(0,28)+'…' : item.label;
+        // Question label
+        const qShort = item.label.length > 32 ? item.label.substring(0,30)+'…' : item.label;
         svg += `<text x="${startX}" y="${cy}" font-size="9" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(qShort)}</text>`;
-        cy += lineH - 2;
+        cy += lineH;
         // Comment text — word wrap
         const words = ('"' + item.comment + '"').split(' ');
         let line = '';
-        const maxChars = Math.floor(colW / 5.5);
+        const maxChars = Math.floor(colW / 5.2);
         for (const word of words) {
           if ((line + word + ' ').length > maxChars && line) {
             svg += `<text x="${startX}" y="${cy}" font-size="9" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim())}</text>`;
-            cy += lineH - 2;
+            cy += lineH;
             line = word + ' ';
           } else { line += word + ' '; }
         }
         if (line.trim()) {
           svg += `<text x="${startX}" y="${cy}" font-size="9" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim())}</text>`;
-          cy += lineH - 2;
+          cy += lineH;
         }
-        cy += 6;
+        cy += 8; // Space between questions
       }
-      cy += 8;
+      cy += 14; // Space between categories
     }
     return svg;
   }
