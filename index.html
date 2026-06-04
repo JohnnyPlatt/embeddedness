@@ -497,10 +497,36 @@
   .btn-export-comments { color: var(--accent-light); border-color: rgba(54,148,252,0.3); }
   .btn-export-comments:hover { background: var(--accent-glow); }
 
-  /* ── DASHBOARD LAYOUT WITH COMMENT PANEL ── */
-  .dash-main-row { display: grid; grid-template-columns: 1fr 320px; gap: 16px; margin-bottom: 22px; }
-  @media (max-width: 900px) { .dash-main-row { grid-template-columns: 1fr; } }
+  /* ── DASHBOARD LAYOUT WITH COMMENT PANELS ── */
+  .dash-radar-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .dash-radar-row { grid-template-columns: 1fr; } }
 
+  .comment-col { display: flex; flex-direction: column; gap: 8px; }
+
+  .comment-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    border-left: 3px solid var(--accent);
+  }
+  .comment-box-cat {
+    font-size: 10px; font-weight: 600; color: var(--accent-light);
+    text-transform: none; margin-bottom: 5px; letter-spacing: 0.01em;
+  }
+  .comment-box-items { display: flex; flex-direction: column; gap: 6px; }
+  .comment-box-item {}
+  .comment-box-q { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+  .comment-box-answer { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .comment-box-text { font-size: 11px; color: var(--text); font-style: italic; font-weight: 300; line-height: 1.4; }
+
+  .radar-centre { display: flex; flex-direction: column; align-items: center; }
+
+  /* Legacy comment panel for scroll view */
   .comment-panel {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 18px 16px; overflow-y: auto; max-height: 420px;
@@ -1771,8 +1797,15 @@ function makeRadarSVG(reviews) {
   const cats = Object.keys(CAT_SCORE_FIELDS);
   const n = cats.length;
   const cx = 200, cy = 185, r = 130;
-  const COLORS = ['#3694fc','#00e2a0','#36ead0','#6100ff','#ff5b8a','#025afb','#fbbf24'];
-  const FILLS  = ['rgba(54,148,252,0.12)','rgba(0,226,160,0.1)','rgba(54,234,208,0.1)','rgba(97,0,255,0.1)','rgba(255,91,138,0.1)','rgba(2,90,251,0.1)','rgba(251,191,36,0.1)'];
+
+  // Most recent = NiCE Blue, older = grey shades getting lighter
+  function reviewColor(ri, total, isFill) {
+    if (ri === total - 1) return isFill ? 'rgba(54,148,252,0.12)' : '#3694fc';
+    // Older reviews: grey, lighter as older
+    const greyStep = total > 2 ? Math.floor(ri * (180 / (total-2))) : 160;
+    const g = Math.min(200, 80 + greyStep);
+    return isFill ? `rgba(${g},${g},${g},0.12)` : `rgb(${g},${g},${g})`;
+  }
 
   // Grid rings
   let gridLines = '';
@@ -1792,9 +1825,12 @@ function makeRadarSVG(reviews) {
     return `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="#e0ddd7" stroke-width="1"/>`;
   }).join('');
 
-  // Data polygons — one per review
+  // Data polygons — most recent last (on top)
+  const total = reviews.length;
   const polygons = reviews.map((rev, ri) => {
     const f = rev.fields;
+    const stroke = reviewColor(ri, total, false);
+    const fill = reviewColor(ri, total, true);
     const pts = cats.map((cat,i) => {
       const val = f[CAT_SCORE_FIELDS[cat]] || 0;
       const a = (i/n)*2*Math.PI - Math.PI/2;
@@ -1803,12 +1839,12 @@ function makeRadarSVG(reviews) {
     const dots = cats.map((cat,i) => {
       const val = f[CAT_SCORE_FIELDS[cat]] || 0;
       const a = (i/n)*2*Math.PI - Math.PI/2;
-      return `<circle cx="${cx+r*val*Math.cos(a)}" cy="${cy+r*val*Math.sin(a)}" r="3" fill="${COLORS[ri]}"/>`;
+      return `<circle cx="${cx+r*val*Math.cos(a)}" cy="${cy+r*val*Math.sin(a)}" r="3" fill="${stroke}"/>`;
     }).join('');
-    return `<polygon points="${pts}" fill="${FILLS[ri]}" stroke="${COLORS[ri]}" stroke-width="2"/>${dots}`;
+    return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>${dots}`;
   }).join('');
 
-  // Axis labels (use last selected review for pct colour)
+  // Axis labels (use most recent review for pct colour)
   const lastF = reviews[reviews.length-1].fields;
   const labels = cats.map((cat,i) => {
     const a = (i/n)*2*Math.PI - Math.PI/2;
@@ -1825,7 +1861,8 @@ function makeRadarSVG(reviews) {
   const legendH = reviews.length > 1 ? reviews.length * 18 + 10 : 0;
   const legend = reviews.length > 1 ? reviews.map((rev,ri) => {
     const name = rev.fields["Review Name"] || rev.fields["Review Date"] || `Review ${ri+1}`;
-    return `<rect x="10" y="${390+ri*18}" width="12" height="12" rx="2" fill="${COLORS[ri]}"/>
+    const col = reviewColor(ri, total, false);
+    return `<rect x="10" y="${390+ri*18}" width="12" height="12" rx="2" fill="${col}"/>
             <text x="26" y="${400+ri*18}" font-size="11" fill="#7a7a8a" font-family="Outfit,sans-serif">${name}</text>`;
   }).join('') : '';
 
@@ -1980,26 +2017,43 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
-    // Build comment panel content
-  const comments = [];
+    // Build comment boxes grouped by category — only cats with comments
+  const catComments = {};
   for (const cat of CATS) {
+    const items = [];
     for (const q of QUESTIONS[cat].questions) {
       const comment = f[q.id + '_comment'];
       if (comment && comment.trim()) {
         const val = f[q.id];
         const opt = val ? q.options.find(o => o.v === val) : null;
-        comments.push({ label: q.label, answer: opt ? opt.label : '', comment: comment.trim() });
+        items.push({ label: q.label.replace(/^[A-Z0-9]+ — /, ''), answer: opt ? opt.label : '', comment: comment.trim() });
       }
     }
+    if (items.length > 0) catComments[cat] = items;
   }
 
-  const commentPanelHTML = comments.length > 0
-    ? comments.map(c => `<div class="comment-item">
-        <div class="comment-q-label">${c.label}</div>
-        <div class="comment-q-answer">${c.answer}</div>
-        <div class="comment-q-text">"${c.comment}"</div>
-      </div>`).join('')
-    : '<div class="comment-empty">No comments recorded for this review</div>';
+  const catsWithComments = Object.keys(catComments);
+  // Split into left (first 4) and right (remaining up to 3)
+  const leftCats = catsWithComments.slice(0, 4);
+  const rightCats = catsWithComments.slice(4, 7);
+
+  function makeCommentBox(cat) {
+    const items = catComments[cat];
+    const accentColor = CAT_COLOURS[cat] || 'var(--accent)';
+    const itemsHTML = items.map(item => `
+      <div class="comment-box-item">
+        <div class="comment-box-q">${item.label}</div>
+        <div class="comment-box-answer">${item.answer}</div>
+        <div class="comment-box-text">"${item.comment}"</div>
+      </div>`).join('');
+    return `<div class="comment-box" style="border-left-color:${accentColor}">
+      <div class="comment-box-cat" style="color:${accentColor}">${cat}</div>
+      <div class="comment-box-items">${itemsHTML}</div>
+    </div>`;
+  }
+
+  const leftColHTML = leftCats.map(makeCommentBox).join('');
+  const rightColHTML = rightCats.map(makeCommentBox).join('');
 
   // Show export buttons
   const exportBtns = document.getElementById('dash-export-btns');
@@ -2007,21 +2061,19 @@ function renderDashboard() {
 
   content.innerHTML = `
     <div class="score-grid">${scoreCardsHTML}</div>
-    <div class="dash-main-row">
-      <div>
-        <div class="chart-card" style="margin-bottom:16px" id="radar-chart-card">
+    <div class="dash-radar-row">
+      <div class="comment-col" id="comment-col-left">${leftColHTML}</div>
+      <div class="radar-centre">
+        <div class="chart-card" id="radar-chart-card" style="width:100%">
           <div class="chart-title">Category scores — current review</div>
           <div id="radar-svg-wrap">${makeRadarSVG(selectedReviews)}</div>
         </div>
-        <div class="chart-card">
-          <div class="chart-title">Score development over time</div>
-          ${makeTrendSVG(state.dashReviews)}
-        </div>
       </div>
-      <div class="comment-panel" id="comment-panel">
-        <div class="comment-panel-title">Comments — ${f["Review Name"] || f["Review Date"] || "this review"}</div>
-        ${commentPanelHTML}
-      </div>
+      <div class="comment-col" id="comment-col-right">${rightColHTML}</div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Score development over time</div>
+      ${makeTrendSVG(state.dashReviews)}
     </div>
     <div class="detail-card">
       <div class="detail-title">Question detail</div>
@@ -2466,30 +2518,25 @@ async function exportRadarPNG(includeComments) {
   // Build export SVG — optionally with comments below
   let exportSVG;
   if (includeComments) {
-    // Gather comments — use the checked reviews, fall back to last dashReview
+    // Gather comments grouped by category
     const checked = [...document.querySelectorAll('#review-checks input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
     const idx = checked.length > 0 ? checked[checked.length - 1] : (state.dashReviews.length - 1);
     const review = state.dashReviews[idx];
     const f = review?.fields || {};
-
-    console.log('Export: review fields keys:', Object.keys(f));
-    console.log('Export: dashReviews length:', state.dashReviews.length, 'idx:', idx);
-
-    const comments = [];
+    const catComments = {};
     for (const cat of CATS) {
+      const items = [];
       for (const q of QUESTIONS[cat].questions) {
-        // Try both field name formats
-        const comment = f[q.id + '_comment'] || f[q.id + '_Comment'] || '';
-        console.log(`Question ${q.id}: answer=${f[q.id]}, comment="${comment}"`);
+        const comment = f[q.id + '_comment'] || '';
         if (comment && comment.trim()) {
           const val = f[q.id];
           const opt = val ? q.options.find(o => o.v === val) : null;
-          comments.push({ label: q.label, answer: opt ? opt.label : '', comment: comment.trim() });
+          items.push({ label: q.label.replace(/^[A-Z0-9]+ — /, ''), answer: opt ? opt.label : '', comment: comment.trim() });
         }
       }
+      if (items.length > 0) catComments[cat] = items;
     }
-    console.log('Export: found', comments.length, 'comments');
-    exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, comments);
+    exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, catComments);
   } else {
     exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, null);
   }
@@ -2500,13 +2547,12 @@ async function exportRadarPNG(includeComments) {
   const img = new Image();
   img.onload = () => {
     const canvas = document.createElement('canvas');
-    canvas.width = img.width * 2;
-    canvas.height = img.height * 2;
+    canvas.width = 1024;
+    canvas.height = 768;
     const ctx = canvas.getContext('2d');
-    ctx.scale(2, 2);
     ctx.fillStyle = '#f2f0eb';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
+    ctx.fillRect(0, 0, 1024, 768);
+    ctx.drawImage(img, 0, 0, 1024, 768);
     URL.revokeObjectURL(url);
     const link = document.createElement('a');
     const suffix = includeComments ? '_with_comments' : '';
@@ -2517,61 +2563,83 @@ async function exportRadarPNG(includeComments) {
   img.src = url;
 }
 
-function buildExportSVG(radarSvgEl, clientName, reviewLabel, comments) {
-  const radarW = 400, radarH = parseInt(radarSvgEl.getAttribute('height')) || 420;
-  const padding = 40;
-  const headerH = 60;
+function buildExportSVG(radarSvgEl, clientName, reviewLabel, catComments) {
+  // Fixed 1024x768 for PowerPoint
+  const W = 1024, H = 768;
+  const headerH = 56;
+  const padding = 24;
+  const radarSize = 380;
+  const radarX = (W - radarSize) / 2; // centre radar
+  const commentColW = (radarX - padding * 2);
+  const lineH = 15;
 
-  let commentsSVG = '';
-  let totalH = headerH + radarH + padding;
-
-  if (comments && comments.length > 0) {
-    const lineH = 16;
-    let cy = headerH + radarH + padding + 20;
-    commentsSVG += `<text x="${padding}" y="${cy}" font-size="13" font-weight="600" fill="#21212b" font-family="Arial,sans-serif">Comments</text>`;
-    cy += 24;
-    commentsSVG += `<line x1="${padding}" y1="${cy}" x2="${radarW + padding}" y2="${cy}" stroke="#e0ddd7" stroke-width="1"/>`;
-    cy += 16;
-
-    for (const c of comments) {
-      // Question label
-      commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(c.label)}</text>`;
-      cy += lineH;
-      // Answer
-      commentsSVG += `<text x="${padding}" y="${cy}" font-size="10" fill="#7a7a8a" font-family="Arial,sans-serif">${escSVG(c.answer)}</text>`;
-      cy += lineH;
-      // Comment — wrap long text
-      const words = c.comment.split(' ');
-      let line = '"';
-      const maxW = 55;
-      for (const word of words) {
-        if ((line + word).length > maxW) {
-          commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line)}</text>`;
-          cy += lineH;
-          line = word + ' ';
-        } else { line += word + ' '; }
-      }
-      if (line.trim()) {
-        commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim() + '"')}</text>`;
-        cy += lineH;
-      }
-      cy += 10;
-    }
-    totalH = cy + padding;
-  }
-
-  const totalW = radarW + padding * 2;
   const radarInner = radarSvgEl.innerHTML;
 
-  return `<svg width="${totalW}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${totalW}" height="${totalH}" fill="#f2f0eb"/>
-    <!-- Header -->
-    <text x="${padding}" y="30" font-size="16" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(clientName)}</text>
-    <text x="${padding}" y="48" font-size="11" fill="#7a7a8a" font-family="Arial,sans-serif">Embeddedness review — ${escSVG(reviewLabel)}</text>
-    <line x1="${padding}" y1="54" x2="${totalW - padding}" y2="54" stroke="#e0ddd7" stroke-width="1"/>
-    <!-- Radar (translated to centre) -->
-    <g transform="translate(${(totalW - radarW)/2}, ${headerH})">${radarInner}</g>
-    ${commentsSVG}
+  // Build comment column SVGs
+  function buildCommentCol(cats, startX, colW) {
+    let svg = '';
+    let cy = headerH + padding;
+    for (const cat of cats) {
+      const items = catComments[cat];
+      if (!items) continue;
+      const accentColor = CAT_COLOURS[cat] || '#3694fc';
+      // Category label
+      svg += `<rect x="${startX}" y="${cy}" width="${colW}" height="14" rx="3" fill="${accentColor}" opacity="0.15"/>`;
+      svg += `<text x="${startX+6}" y="${cy+10}" font-size="10" font-weight="700" fill="${accentColor}" font-family="Arial,sans-serif">${escSVG(cat)}</text>`;
+      cy += 18;
+      for (const item of items) {
+        // Question (shortened)
+        const qShort = item.label.length > 30 ? item.label.substring(0,28)+'…' : item.label;
+        svg += `<text x="${startX}" y="${cy}" font-size="9" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(qShort)}</text>`;
+        cy += lineH - 2;
+        // Comment text — word wrap
+        const words = ('"' + item.comment + '"').split(' ');
+        let line = '';
+        const maxChars = Math.floor(colW / 5.5);
+        for (const word of words) {
+          if ((line + word + ' ').length > maxChars && line) {
+            svg += `<text x="${startX}" y="${cy}" font-size="9" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim())}</text>`;
+            cy += lineH - 2;
+            line = word + ' ';
+          } else { line += word + ' '; }
+        }
+        if (line.trim()) {
+          svg += `<text x="${startX}" y="${cy}" font-size="9" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim())}</text>`;
+          cy += lineH - 2;
+        }
+        cy += 6;
+      }
+      cy += 8;
+    }
+    return svg;
+  }
+
+  const allCats = catComments ? Object.keys(catComments) : [];
+  const leftCats = allCats.slice(0, 4);
+  const rightCats = allCats.slice(4, 7);
+  const rightX = radarX + radarSize + padding;
+  const rightColW = W - rightX - padding;
+
+  const leftSVG = catComments ? buildCommentCol(leftCats, padding, commentColW) : '';
+  const rightSVG = catComments ? buildCommentCol(rightCats, rightX, rightColW) : '';
+
+  // Scale radar to fit in radarSize box
+  const origH = parseInt(radarSvgEl.getAttribute('height')) || 400;
+  const scale = radarSize / 400;
+  const scaledH = Math.round(origH * scale);
+  const radarY = headerH + Math.max(0, (H - headerH - scaledH) / 2 - padding);
+
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${W}" height="${H}" fill="#f2f0eb"/>
+    <!-- Header bar -->
+    <rect width="${W}" height="${headerH}" fill="#21212b"/>
+    <text x="${padding}" y="26" font-size="16" font-weight="700" fill="#ffffff" font-family="Arial,sans-serif">${escSVG(clientName)}</text>
+    <text x="${padding}" y="44" font-size="11" fill="#8888a8" font-family="Arial,sans-serif">Embeddedness review — ${escSVG(reviewLabel)}</text>
+    <text x="${W-padding}" y="35" font-size="10" fill="#8888a8" font-family="Arial,sans-serif" text-anchor="end">NiCE</text>
+    <!-- Radar -->
+    <g transform="translate(${radarX}, ${radarY}) scale(${scale.toFixed(3)})">${radarInner}</g>
+    <!-- Comment columns -->
+    ${leftSVG}${rightSVG}
   </svg>`;
 }
 
