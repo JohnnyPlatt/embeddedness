@@ -443,6 +443,83 @@
   .btn-add-section { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-size: 12px; width: 100%; margin-bottom: 14px; }
   .btn-add-section:hover { border-color: var(--green); color: var(--green); }
 
+  /* ── OVERVIEW ── */
+  .overview-panel { padding: 24px 32px; overflow-y: auto; flex: 1; }
+
+  .ov-summary-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .ov-summary-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; transition: border-color 0.15s;
+  }
+  .ov-summary-card:hover { border-color: var(--border-light); }
+  .ov-summary-label { color: var(--muted); font-size: 11px; font-weight: 500; margin-bottom: 6px; }
+  .ov-summary-value { font-size: 32px; font-weight: 600; color: var(--text); font-family: var(--font-mono); }
+
+  .ov-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .ov-search-wrap { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 13px; flex: 1; min-width: 200px; }
+  .ov-search-icon { font-size: 13px; }
+  .ov-search-wrap input { border: none; background: none; outline: none; color: var(--text); font-family: var(--font-body); font-size: 13px; width: 100%; }
+  .ov-search-wrap input::placeholder { color: var(--muted); }
+
+  .ov-filter-group { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+  .ov-filter-btn { background: none; border: none; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--muted); transition: all 0.15s; }
+  .ov-filter-btn.active { background: var(--accent); color: #fff; }
+  .ov-filter-btn:hover:not(.active) { color: var(--text); }
+
+  .ov-view-toggle { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+  .ov-view-btn { background: none; border: none; border-radius: 6px; padding: 5px 13px; cursor: pointer; font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--muted); transition: all 0.15s; }
+  .ov-view-btn.active { background: var(--surface); border: 1px solid var(--border); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* Client list row */
+  .ov-client-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 16px; margin-bottom: 8px;
+    transition: border-color 0.15s, box-shadow 0.15s; cursor: default;
+  }
+  .ov-client-row:hover { border-color: var(--border-light); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+  .ov-score-ring { flex-shrink: 0; }
+  .ov-client-info { flex: 1; min-width: 0; }
+  .ov-client-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .ov-client-meta { display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+  .ov-region-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    background: var(--accent-glow); color: var(--accent-light); border: 1px solid rgba(54,148,252,0.2);
+  }
+  .ov-region-tag.na { background: rgba(97,0,255,0.08); color: #6100ff; border-color: rgba(97,0,255,0.2); }
+  .ov-csm { font-size: 11px; color: var(--muted); }
+  .ov-date { font-size: 11px; color: var(--muted); }
+  .ov-no-review { font-size: 11px; color: var(--muted); font-style: italic; }
+
+  /* Mini bar chart */
+  .ov-mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 32px; flex-shrink: 0; }
+  .ov-mini-bar { width: 8px; border-radius: 3px 3px 0 0; transition: height 0.3s; }
+
+  /* Update button */
+  .btn-update {
+    background: none; border: 1px solid var(--border); color: var(--accent-light);
+    border-radius: 7px; padding: 6px 14px; cursor: pointer; font-family: var(--font-body);
+    font-size: 12px; font-weight: 500; flex-shrink: 0; transition: all 0.15s;
+  }
+  .btn-update:hover { background: var(--accent-glow); border-color: rgba(54,148,252,0.3); }
+
+  /* Heatmap */
+  .ov-heatmap { overflow-x: auto; }
+  .ov-heatmap table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+  .ov-heatmap th { font-size: 11px; font-weight: 500; color: var(--muted); padding: 4px 8px; text-align: center; white-space: nowrap; }
+  .ov-heatmap th.col-client { text-align: left; padding-left: 0; }
+  .ov-heatmap td { padding: 3px 4px; }
+  .ov-heatmap td.col-client { font-size: 13px; font-weight: 600; color: var(--text); padding-left: 0; padding-right: 12px; white-space: nowrap; }
+  .ov-heatmap td.col-overall { text-align: center; font-size: 14px; font-weight: 700; font-family: var(--font-mono); padding-left: 8px; }
+  .ov-cat-pill {
+    display: block; text-align: center; padding: 5px 4px;
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    font-family: var(--font-mono); min-width: 46px;
+    color: #fff;
+  }
+  .ov-heatmap-section { margin-bottom: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+
   .no-review-state { color: var(--muted); text-align: center; padding: 60px; font-size: 14px; }
 
   /* Edit/delete buttons on review checkboxes */
@@ -494,6 +571,7 @@
 <header class="header">
   <div class="header-brand">Embeddedness <span>review</span></div>
   <nav class="nav-tabs">
+    <button class="nav-tab" onclick="showView('overview')">Overview</button>
     <button class="nav-tab active" onclick="showView('review')">Score Entry</button>
     <button class="nav-tab" onclick="showView('dashboard')">Dashboard</button>
   </nav>
@@ -501,6 +579,66 @@
 </header>
 
 <div class="app">
+
+  <!-- OVERVIEW VIEW -->
+  <div class="view" id="view-overview">
+    <div class="overview-panel">
+      <!-- Summary cards -->
+      <div class="ov-summary-row" id="ov-summary-row">
+        <div class="ov-summary-card">
+          <div class="ov-summary-label">Total clients</div>
+          <div class="ov-summary-value" id="ov-total">—</div>
+        </div>
+        <div class="ov-summary-card">
+          <div class="ov-summary-label">Assessed</div>
+          <div class="ov-summary-value" id="ov-assessed">—</div>
+        </div>
+        <div class="ov-summary-card">
+          <div class="ov-summary-label">Avg score</div>
+          <div class="ov-summary-value" id="ov-avg">—</div>
+        </div>
+        <div class="ov-summary-card">
+          <div class="ov-summary-label">EMEA clients</div>
+          <div class="ov-summary-value" id="ov-emea">—</div>
+        </div>
+        <div class="ov-summary-card">
+          <div class="ov-summary-label">NA clients</div>
+          <div class="ov-summary-value" id="ov-na">—</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="ov-controls">
+        <div class="ov-search-wrap">
+          <span class="ov-search-icon">🔍</span>
+          <input type="text" id="ov-search" placeholder="Search clients..." oninput="filterOverview()">
+        </div>
+        <div class="ov-filter-group">
+          <button class="ov-filter-btn active" onclick="setRegionFilter('all', this)">All</button>
+          <button class="ov-filter-btn" onclick="setRegionFilter('EMEA', this)">EMEA</button>
+          <button class="ov-filter-btn" onclick="setRegionFilter('NA', this)">NA</button>
+        </div>
+        <div class="ov-view-toggle">
+          <button class="ov-view-btn active" id="btn-view-list" onclick="setOvView('list')">List</button>
+          <button class="ov-view-btn" id="btn-view-heatmap" onclick="setOvView('heatmap')">Heatmap</button>
+        </div>
+      </div>
+
+      <!-- List view -->
+      <div id="ov-list-view">
+        <div id="ov-list-container">
+          <div class="loading-state"><span class="spinner"></span>Loading...</div>
+        </div>
+      </div>
+
+      <!-- Heatmap view -->
+      <div id="ov-heatmap-view" style="display:none">
+        <div id="ov-heatmap-container">
+          <div class="loading-state"><span class="spinner"></span>Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- REVIEW VIEW -->
   <div class="view active" id="view-review">
@@ -950,7 +1088,12 @@ async function atFetch(method, path, body) {
 
 async function loadClients() {
   const data = await atFetch("GET", `${CLIENTS_TABLE}?maxRecords=200&sort[0][field]=Client%20Name&sort[0][direction]=asc`);
-  state.clients = (data.records || []).map(r => ({ id: r.id, name: r.fields["Client Name"] || "", csm: r.fields["CSM Owner"] || "" }));
+  state.clients = (data.records || []).map(r => ({
+    id: r.id,
+    name: r.fields["Client Name"] || "",
+    csm: r.fields["CSM Owner"] || "",
+    region: r.fields["Region"] || ""
+  }));
   return state.clients;
 }
 
@@ -1027,8 +1170,10 @@ function showView(v) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
-  document.querySelectorAll('.nav-tab')[v === 'review' ? 0 : 1].classList.add('active');
+  const tabIndex = v === 'overview' ? 0 : v === 'review' ? 1 : 2;
+  document.querySelectorAll('.nav-tab')[tabIndex].classList.add('active');
   if (v === 'dashboard') refreshDashClientSelect();
+  if (v === 'overview') loadOverview();
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1968,7 +2113,7 @@ async function refreshClientList() {
     container.innerHTML = '<div class="client-list">' +
       state.clients.map(c => `
         <div class="client-item">
-          <div><div class="client-item-name">${c.name}</div><div class="client-item-csm">${c.csm}</div></div>
+          <div><div class="client-item-name">${c.name}</div><div class="client-item-csm">${c.csm}${c.region ? ' · ' + c.region : ''}</div></div>
           <button class="btn-remove" onclick="deleteClient('${c.id}','${c.name}')">Remove</button>
         </div>`).join('') +
       '</div>';
@@ -2006,6 +2151,252 @@ async function deleteClient(id, name) {
   } catch(e) {
     alert('Failed to remove: ' + e.message);
   }
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+// Category colours matching prototype
+const CAT_COLOURS = {
+  "Business Case":   "#00b894",
+  "Journey Volumes": "#6c5ce7",
+  "Engagement":      "#e67e22",
+  "Advocacy":        "#e84393",
+  "Differentiators": "#00cec9",
+  "Technical Health":"#3694fc",
+  "Contractual":     "#95a5a6"
+};
+
+let ovState = {
+  regionFilter: 'all',
+  view: 'list',
+  allReviews: {},      // clientName -> latest review fields
+  sortedClients: []    // clients sorted by score desc
+};
+
+async function loadOverview() {
+  // Load all latest reviews for all clients
+  try {
+    // Fetch all score records, get latest per client
+    const enc = encodeURIComponent('NOT({Client} = "")');
+    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
+    const records = data.records || [];
+
+    // Build map of clientName -> latest review
+    const latestMap = {};
+    for (const r of records) {
+      const client = r.fields.Client;
+      if (client && !latestMap[client]) latestMap[client] = r.fields;
+    }
+    ovState.allReviews = latestMap;
+
+    // Sort clients by overall score
+    ovState.sortedClients = [...state.clients].sort((a, b) => {
+      const aScore = getOverallScore(latestMap[a.name]);
+      const bScore = getOverallScore(latestMap[b.name]);
+      return bScore - aScore;
+    });
+
+    updateSummaryCards();
+    renderOvList();
+    renderOvHeatmap();
+  } catch(e) {
+    document.getElementById('ov-list-container').innerHTML = `<div class="no-review-state">Error loading data: ${e.message}</div>`;
+  }
+}
+
+function getOverallScore(fields) {
+  if (!fields) return 0;
+  const scores = Object.values(CAT_SCORE_FIELDS).map(f => fields[f] || 0);
+  return Math.round(scores.reduce((a,b) => a+b, 0) / scores.length * 100);
+}
+
+function updateSummaryCards() {
+  const total = state.clients.length;
+  const assessed = state.clients.filter(c => ovState.allReviews[c.name]).length;
+  const scores = state.clients.map(c => getOverallScore(ovState.allReviews[c.name])).filter(s => s > 0);
+  const avg = scores.length ? Math.round(scores.reduce((a,b) => a+b,0) / scores.length) : 0;
+  const emea = state.clients.filter(c => c.region === 'EMEA').length;
+  const na = state.clients.filter(c => c.region === 'NA').length;
+
+  document.getElementById('ov-total').textContent = total;
+  document.getElementById('ov-assessed').textContent = assessed;
+  const avgEl = document.getElementById('ov-avg');
+  avgEl.textContent = avg || '—';
+  avgEl.style.color = avg >= 75 ? 'var(--green)' : avg >= 50 ? 'var(--amber)' : avg > 0 ? 'var(--red)' : 'var(--text)';
+  document.getElementById('ov-emea').textContent = emea || '—';
+  document.getElementById('ov-na').textContent = na || '—';
+}
+
+function getFilteredClients() {
+  const search = document.getElementById('ov-search')?.value?.toLowerCase() || '';
+  return ovState.sortedClients.filter(c => {
+    const matchRegion = ovState.regionFilter === 'all' || c.region === ovState.regionFilter;
+    const matchSearch = !search || c.name.toLowerCase().includes(search) || (c.csm||'').toLowerCase().includes(search);
+    return matchRegion && matchSearch;
+  });
+}
+
+function makeMiniBarsSVG(fields) {
+  if (!fields) return '<div class="ov-mini-bars">' + CATS.map(cat => `<div class="ov-mini-bar" style="height:4px;background:var(--border)"></div>`).join('') + '</div>';
+  const bars = CATS.map(cat => {
+    const pct = Math.round((fields[CAT_SCORE_FIELDS[cat]] || 0) * 100);
+    const h = Math.max(4, Math.round(pct * 0.32));
+    return `<div class="ov-mini-bar" style="height:${h}px;background:${CAT_COLOURS[cat]}"></div>`;
+  }).join('');
+  return `<div class="ov-mini-bars">${bars}</div>`;
+}
+
+function makeScoreRingSVG(pct) {
+  const r = 20, cx = 24, cy = 24;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : pct > 0 ? 'var(--red)' : 'var(--border)';
+  const display = pct > 0 ? pct : '—';
+  return `<svg width="48" height="48" viewBox="0 0 48 48">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="3"/>
+    ${pct > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3"
+      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>` : ''}
+    <text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle"
+      font-size="${pct > 0 ? '11' : '10'}" font-weight="600" fill="${color}"
+      font-family="'DM Mono',monospace">${display}</text>
+  </svg>`;
+}
+
+function renderOvList() {
+  const container = document.getElementById('ov-list-container');
+  const clients = getFilteredClients();
+
+  if (clients.length === 0) {
+    container.innerHTML = '<div class="no-review-state">No clients match your search.</div>';
+    return;
+  }
+
+  container.innerHTML = clients.map(c => {
+    const fields = ovState.allReviews[c.name];
+    const score = getOverallScore(fields);
+    const date = fields?.["Review Date"] ? `Updated ${fields["Review Date"]}` : '';
+    const reviewName = fields?.["Review Name"] || '';
+    const regionClass = c.region === 'NA' ? 'ov-region-tag na' : 'ov-region-tag';
+
+    return `<div class="ov-client-row">
+      <div class="ov-score-ring">${makeScoreRingSVG(score)}</div>
+      <div class="ov-client-info">
+        <div class="ov-client-name">${c.name}</div>
+        <div class="ov-client-meta">
+          ${c.region ? `<span class="${regionClass}">${c.region}</span>` : ''}
+          ${c.csm ? `<span class="ov-csm">${c.csm}</span>` : ''}
+          ${date ? `<span class="ov-date">${date}${reviewName ? ' · ' + reviewName : ''}</span>` : '<span class="ov-no-review">No review yet</span>'}
+        </div>
+      </div>
+      ${makeMiniBarsSVG(fields)}
+      ${fields ? `<button class="btn-update" onclick="startUpdateFromOverview('${c.name.replace(/'/g,"\'")}')">Update</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderOvHeatmap() {
+  const container = document.getElementById('ov-heatmap-container');
+  const clients = getFilteredClients();
+
+  if (clients.length === 0) {
+    container.innerHTML = '<div class="no-review-state">No clients match your filter.</div>';
+    return;
+  }
+
+  // Header row
+  const headerCols = CATS.map(cat =>
+    `<th style="text-align:center"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAT_COLOURS[cat]};margin-right:4px"></span>${cat.replace('Journey Volumes','Journey').replace('Technical Health','Technical').replace('Business Case','Business').replace('Differentiators','Differ.')}</th>`
+  ).join('');
+
+  const rows = clients.map(c => {
+    const fields = ovState.allReviews[c.name];
+    const overall = getOverallScore(fields);
+    const overallColor = overall >= 75 ? 'var(--green)' : overall >= 50 ? 'var(--amber)' : overall > 0 ? 'var(--red)' : 'var(--muted)';
+
+    const cats = CATS.map(cat => {
+      if (!fields) return `<td><span class="ov-cat-pill" style="background:var(--border);color:var(--muted)">—</span></td>`;
+      const pct = Math.round((fields[CAT_SCORE_FIELDS[cat]] || 0) * 100);
+      const base = CAT_COLOURS[cat];
+      // Vary opacity by score
+      const opacity = 0.3 + (pct / 100) * 0.7;
+      return `<td><span class="ov-cat-pill" style="background:${base};opacity:${opacity.toFixed(2)}">${pct}</span></td>`;
+    }).join('');
+
+    return `<tr>
+      <td class="col-client">${c.name}${c.region ? ` <span style="font-size:9px;font-weight:600;color:var(--muted)">${c.region}</span>` : ''}</td>
+      ${cats}
+      <td class="col-overall" style="color:${overallColor}">${overall || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `<div class="ov-heatmap-section">
+    <div class="ov-heatmap">
+      <table>
+        <thead><tr>
+          <th class="col-client">Customer</th>
+          ${headerCols}
+          <th>Overall</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function filterOverview() {
+  renderOvList();
+  renderOvHeatmap();
+}
+
+function setRegionFilter(region, btn) {
+  ovState.regionFilter = region;
+  document.querySelectorAll('.ov-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterOverview();
+}
+
+function setOvView(view) {
+  ovState.view = view;
+  document.getElementById('ov-list-view').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('ov-heatmap-view').style.display = view === 'heatmap' ? 'block' : 'none';
+  document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+  document.getElementById('btn-view-heatmap').classList.toggle('active', view === 'heatmap');
+}
+
+async function startUpdateFromOverview(clientName) {
+  // Load latest review answers into score entry form
+  const fields = ovState.allReviews[clientName];
+  if (!fields) return;
+
+  state.answers = {};
+  for (const cat of CATS) {
+    for (const q of QUESTIONS[cat].questions) {
+      if (fields[q.id] !== undefined) state.answers[q.id] = fields[q.id];
+      if (fields[q.id + '_comment']) state.answers[q.id + '_c'] = fields[q.id + '_comment'];
+    }
+  }
+
+  // Find the record ID for the latest review
+  try {
+    const enc = encodeURIComponent(`{Client}="${clientName}"`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?filterByFormula=${enc}&sort[0][field]=Review%20Date&sort[0][direction]=desc&maxRecords=1`);
+    const rec = data.records?.[0];
+    if (rec) {
+      state.editingRecordId = null; // This is a new review pre-populated from last
+    }
+  } catch(e) { console.warn('Could not fetch record id:', e); }
+
+  // Set client and switch to score entry
+  state.activeCat = CATS[0];
+  document.getElementById('sel-client').value = clientName;
+  document.getElementById('inp-csm').value = fields.CSM || '';
+  document.getElementById('inp-review-name').value = '';
+  document.getElementById('edit-banner').style.display = 'none';
+  document.getElementById('btn-submit').textContent = 'Submit Review';
+
+  showView('review');
+  buildSidebar();
+  renderQuestions();
+  updateNavButtons();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
