@@ -3078,7 +3078,12 @@ async function loadOverview() {
     const records = data.records || [];
 
     // Build map of clientName -> latest review
-    // For same date, prefer record with Overall_Score populated
+    // Count answered questions to determine most complete record
+    const SCORE_FIELDS = ["BC1","BC2","V1","V2","V3","E1","E2","E3","E4","E5",
+      "A1","A2","A3","D1","D2","TH1","TH2","TH3","TH4","TH5","C1","C2","C3","C4","C5","C6"];
+    function countAnswered(fields) {
+      return SCORE_FIELDS.filter(f => fields[f] !== undefined && fields[f] !== null).length;
+    }
     const latestMap = {};
     for (const r of records) {
       const client = r.fields.Client;
@@ -3089,15 +3094,14 @@ async function loadOverview() {
         const existing = latestMap[client];
         const existingDate = existing["Review Date"] || '';
         const newDate = r.fields["Review Date"] || '';
-        // If same date, prefer the one with Overall_Score
-        if (newDate === existingDate) {
-          if (r.fields["Overall_Score"] !== undefined && existing["Overall_Score"] === undefined) {
+        if (newDate > existingDate) {
+          // Newer date always wins
+          latestMap[client] = r.fields;
+        } else if (newDate === existingDate) {
+          // Same date — prefer the more complete record
+          if (countAnswered(r.fields) > countAnswered(existing)) {
             latestMap[client] = r.fields;
           }
-        }
-        // If newer date, always replace (records are sorted desc so this shouldn't happen, but safety check)
-        else if (newDate > existingDate) {
-          latestMap[client] = r.fields;
         }
       }
     }
