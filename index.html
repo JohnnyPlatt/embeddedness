@@ -486,6 +486,33 @@
   .btn-add-section { background: none; border: 1px dashed var(--border-light); color: var(--muted); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-size: 12px; width: 100%; margin-bottom: 14px; }
   .btn-add-section:hover { border-color: var(--green); color: var(--green); }
 
+  /* ── EXPORT BUTTONS ── */
+  .btn-export {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 7px; padding: 7px 14px;
+    cursor: pointer; font-family: var(--font-body); font-size: 12px; font-weight: 500;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-export:hover { border-color: var(--border-light); color: var(--text); }
+  .btn-export-comments { color: var(--accent-light); border-color: rgba(54,148,252,0.3); }
+  .btn-export-comments:hover { background: var(--accent-glow); }
+
+  /* ── DASHBOARD LAYOUT WITH COMMENT PANEL ── */
+  .dash-main-row { display: grid; grid-template-columns: 1fr 320px; gap: 16px; margin-bottom: 22px; }
+  @media (max-width: 900px) { .dash-main-row { grid-template-columns: 1fr; } }
+
+  .comment-panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 16px; overflow-y: auto; max-height: 420px;
+  }
+  .comment-panel-title { color: var(--muted); font-size: 11px; font-weight: 500; margin-bottom: 12px; }
+  .comment-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .comment-q-label { color: var(--text); font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+  .comment-q-answer { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  .comment-q-text { color: var(--text); font-size: 12px; font-weight: 300; font-style: italic; line-height: 1.5; }
+  .comment-empty { color: var(--muted); font-size: 12px; font-style: italic; text-align: center; padding: 20px 0; }
+
   /* ── OVERVIEW ── */
   .overview-panel { padding: 24px 32px; overflow-y: auto; flex: 1; }
 
@@ -665,6 +692,7 @@
           <button class="ov-view-btn active" id="btn-view-list" onclick="setOvView('list')">List</button>
           <button class="ov-view-btn" id="btn-view-heatmap" onclick="setOvView('heatmap')">Heatmap</button>
         </div>
+        <button class="btn-export" id="btn-ov-pdf" onclick="exportOverviewPDF(ovState.view === 'list' ? 'overview-list' : 'overview-heatmap')" style="display:none">⬇ PDF</button>
       </div>
 
       <!-- List view -->
@@ -753,6 +781,11 @@
           <option value="">Select a client...</option>
         </select>
         <select id="dash-review" style="max-width:280px;display:none" onchange="renderDashboard()"></select>
+        <div id="dash-export-btns" style="display:none;gap:6px;display:none;align-items:center">
+          <button class="btn-export" onclick="exportRadarPNG(false)" title="Download radar chart without comments">⬇ Radar</button>
+          <button class="btn-export btn-export-comments" onclick="exportRadarPNG(true)" title="Download radar chart with comments">⬇ Radar + comments</button>
+          <button class="btn-export" onclick="exportOverviewPDF('dashboard')" title="Download full dashboard as PDF">⬇ PDF</button>
+        </div>
       </div>
       <div id="review-check-panel" style="display:none;flex-wrap:wrap;gap:8px;padding:0 32px 16px;align-items:center;">
         <span style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;margin-right:4px;">Compare:</span>
@@ -1275,9 +1308,11 @@ function renderQuestions() {
 
   const hdr = document.createElement('div');
   hdr.className = 'panel-header';
+  const clientName = document.getElementById('sel-client').value;
+  const clientSuffix = clientName ? ` <span style="color:var(--muted);font-weight:300">— ${clientName}</span>` : '';
   let subtitle = 'Drag the slider to the position that best fits the current state for this client.';
   if (hasPrev) subtitle += ` <span style="color:var(--amber);font-size:12px">▲ markers show ${prevLabel}</span>`;
-  hdr.innerHTML = `<div class="panel-title">${cat}</div><div class="panel-subtitle">${subtitle}</div>`;
+  hdr.innerHTML = `<div class="panel-title">${cat}${clientSuffix}</div><div class="panel-subtitle">${subtitle}</div>`;
   container.appendChild(hdr);
 
   qs.forEach(q => {
@@ -1945,20 +1980,51 @@ function renderDashboard() {
     </div>`;
   }).join('');
 
+    // Build comment panel content
+  const comments = [];
+  for (const cat of CATS) {
+    for (const q of QUESTIONS[cat].questions) {
+      const comment = f[q.id + '_comment'];
+      if (comment && comment.trim()) {
+        const val = f[q.id];
+        const opt = val ? q.options.find(o => o.v === val) : null;
+        comments.push({ label: q.label, answer: opt ? opt.label : '', comment: comment.trim() });
+      }
+    }
+  }
+
+  const commentPanelHTML = comments.length > 0
+    ? comments.map(c => `<div class="comment-item">
+        <div class="comment-q-label">${c.label}</div>
+        <div class="comment-q-answer">${c.answer}</div>
+        <div class="comment-q-text">"${c.comment}"</div>
+      </div>`).join('')
+    : '<div class="comment-empty">No comments recorded for this review</div>';
+
+  // Show export buttons
+  const exportBtns = document.getElementById('dash-export-btns');
+  if (exportBtns) exportBtns.style.display = 'flex';
+
   content.innerHTML = `
     <div class="score-grid">${scoreCardsHTML}</div>
-    <div class="charts-row">
-      <div class="chart-card">
-        <div class="chart-title">Category Scores — Current Review</div>
-        ${makeRadarSVG(selectedReviews)}
+    <div class="dash-main-row">
+      <div>
+        <div class="chart-card" style="margin-bottom:16px" id="radar-chart-card">
+          <div class="chart-title">Category scores — current review</div>
+          <div id="radar-svg-wrap">${makeRadarSVG(selectedReviews)}</div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Score development over time</div>
+          ${makeTrendSVG(state.dashReviews)}
+        </div>
       </div>
-      <div class="chart-card">
-        <div class="chart-title">Score Development Over Time</div>
-        ${makeTrendSVG(state.dashReviews)}
+      <div class="comment-panel" id="comment-panel">
+        <div class="comment-panel-title">Comments — ${f["Review Name"] || f["Review Date"] || "this review"}</div>
+        ${commentPanelHTML}
       </div>
     </div>
     <div class="detail-card">
-      <div class="detail-title">Question Detail</div>
+      <div class="detail-title">Question detail</div>
       ${detailHTML}
     </div>`;
 }
@@ -2384,6 +2450,158 @@ async function deleteClient(id, name) {
   }
 }
 
+// ── EXPORTS ──────────────────────────────────────────────────────────────────
+async function exportRadarPNG(includeComments) {
+  const radarWrap = document.getElementById('radar-svg-wrap');
+  if (!radarWrap) { alert('No radar chart to export — please select a client and review first.'); return; }
+
+  const clientName = document.getElementById('dash-client').value || 'client';
+  const reviewSel = document.getElementById('dash-review');
+  const reviewLabel = reviewSel?.options[reviewSel.selectedIndex]?.text || 'review';
+
+  // Get the SVG
+  const svgEl = radarWrap.querySelector('svg');
+  if (!svgEl) { alert('Radar chart not found.'); return; }
+
+  // Build export SVG — optionally with comments below
+  let exportSVG;
+  if (includeComments) {
+    // Gather comments for selected review
+    const idx = parseInt(document.getElementById('dash-review').value);
+    const review = state.dashReviews[idx];
+    const f = review?.fields || {};
+    const comments = [];
+    for (const cat of CATS) {
+      for (const q of QUESTIONS[cat].questions) {
+        const comment = f[q.id + '_comment'];
+        if (comment && comment.trim()) {
+          const val = f[q.id];
+          const opt = val ? q.options.find(o => o.v === val) : null;
+          comments.push({ label: q.label, answer: opt ? opt.label : '', comment: comment.trim() });
+        }
+      }
+    }
+    exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, comments);
+  } else {
+    exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, null);
+  }
+
+  // Convert SVG to PNG via canvas
+  const blob = new Blob([exportSVG], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width * 2;
+    canvas.height = img.height * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#f2f0eb';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+    const suffix = includeComments ? '_with_comments' : '';
+    link.download = `${clientName}_embeddedness${suffix}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
+}
+
+function buildExportSVG(radarSvgEl, clientName, reviewLabel, comments) {
+  const radarW = 400, radarH = parseInt(radarSvgEl.getAttribute('height')) || 420;
+  const padding = 40;
+  const headerH = 60;
+
+  let commentsSVG = '';
+  let totalH = headerH + radarH + padding;
+
+  if (comments && comments.length > 0) {
+    const lineH = 16;
+    let cy = headerH + radarH + padding + 20;
+    commentsSVG += `<text x="${padding}" y="${cy}" font-size="13" font-weight="600" fill="#21212b" font-family="Arial,sans-serif">Comments</text>`;
+    cy += 24;
+    commentsSVG += `<line x1="${padding}" y1="${cy}" x2="${radarW + padding}" y2="${cy}" stroke="#e0ddd7" stroke-width="1"/>`;
+    cy += 16;
+
+    for (const c of comments) {
+      // Question label
+      commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(c.label)}</text>`;
+      cy += lineH;
+      // Answer
+      commentsSVG += `<text x="${padding}" y="${cy}" font-size="10" fill="#7a7a8a" font-family="Arial,sans-serif">${escSVG(c.answer)}</text>`;
+      cy += lineH;
+      // Comment — wrap long text
+      const words = c.comment.split(' ');
+      let line = '"';
+      const maxW = 55;
+      for (const word of words) {
+        if ((line + word).length > maxW) {
+          commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line)}</text>`;
+          cy += lineH;
+          line = word + ' ';
+        } else { line += word + ' '; }
+      }
+      if (line.trim()) {
+        commentsSVG += `<text x="${padding}" y="${cy}" font-size="11" fill="#3a3a4a" font-family="Arial,sans-serif" font-style="italic">${escSVG(line.trim() + '"')}</text>`;
+        cy += lineH;
+      }
+      cy += 10;
+    }
+    totalH = cy + padding;
+  }
+
+  const totalW = radarW + padding * 2;
+  const radarInner = radarSvgEl.innerHTML;
+
+  return `<svg width="${totalW}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${totalW}" height="${totalH}" fill="#f2f0eb"/>
+    <!-- Header -->
+    <text x="${padding}" y="30" font-size="16" font-weight="700" fill="#21212b" font-family="Arial,sans-serif">${escSVG(clientName)}</text>
+    <text x="${padding}" y="48" font-size="11" fill="#7a7a8a" font-family="Arial,sans-serif">Embeddedness review — ${escSVG(reviewLabel)}</text>
+    <line x1="${padding}" y1="54" x2="${totalW - padding}" y2="54" stroke="#e0ddd7" stroke-width="1"/>
+    <!-- Radar (translated to centre) -->
+    <g transform="translate(${(totalW - radarW)/2}, ${headerH})">${radarInner}</g>
+    ${commentsSVG}
+  </svg>`;
+}
+
+function escSVG(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function exportOverviewPDF(view) {
+  // Use browser print with a print-specific stylesheet
+  const printStyles = `
+    @media print {
+      .header, .nav-tabs, .btn-admin, .ov-controls, .dashboard-controls,
+      .review-check-panel, #dash-export-btns, .btn-export,
+      #view-review, #view-dashboard, #view-overview .ov-list-view,
+      .btn-update, .btn-remove { display: none !important; }
+      body { background: white !important; }
+      .score-card, .ov-client-row, .ov-heatmap-section { break-inside: avoid; }
+      .app { padding-top: 0 !important; }
+    }`;
+
+  // Show the right view
+  if (view === 'overview-list') {
+    setOvView('list');
+  } else if (view === 'overview-heatmap') {
+    setOvView('heatmap');
+  }
+
+  const styleEl = document.createElement('style');
+  styleEl.id = 'print-style';
+  styleEl.textContent = printStyles;
+  document.head.appendChild(styleEl);
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { document.getElementById('print-style')?.remove(); }, 1000);
+  }, 300);
+}
+
 // ── OVERVIEW ─────────────────────────────────────────────────────────────────
 // Category colours matching prototype
 const CAT_COLOURS = {
@@ -2429,6 +2647,8 @@ async function loadOverview() {
     updateSummaryCards();
     renderOvList();
     renderOvHeatmap();
+    const pdfBtn = document.getElementById('btn-ov-pdf');
+    if (pdfBtn) pdfBtn.style.display = 'inline-block';
   } catch(e) {
     document.getElementById('ov-list-container').innerHTML = `<div class="no-review-state">Error loading data: ${e.message}</div>`;
   }
