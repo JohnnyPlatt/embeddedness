@@ -2466,14 +2466,21 @@ async function exportRadarPNG(includeComments) {
   // Build export SVG — optionally with comments below
   let exportSVG;
   if (includeComments) {
-    // Gather comments for selected review
-    const idx = parseInt(document.getElementById('dash-review').value);
+    // Gather comments — use the checked reviews, fall back to last dashReview
+    const checked = [...document.querySelectorAll('#review-checks input[type=checkbox]:checked')].map(cb => parseInt(cb.value));
+    const idx = checked.length > 0 ? checked[checked.length - 1] : (state.dashReviews.length - 1);
     const review = state.dashReviews[idx];
     const f = review?.fields || {};
+
+    console.log('Export: review fields keys:', Object.keys(f));
+    console.log('Export: dashReviews length:', state.dashReviews.length, 'idx:', idx);
+
     const comments = [];
     for (const cat of CATS) {
       for (const q of QUESTIONS[cat].questions) {
-        const comment = f[q.id + '_comment'];
+        // Try both field name formats
+        const comment = f[q.id + '_comment'] || f[q.id + '_Comment'] || '';
+        console.log(`Question ${q.id}: answer=${f[q.id]}, comment="${comment}"`);
         if (comment && comment.trim()) {
           const val = f[q.id];
           const opt = val ? q.options.find(o => o.v === val) : null;
@@ -2481,6 +2488,7 @@ async function exportRadarPNG(includeComments) {
         }
       }
     }
+    console.log('Export: found', comments.length, 'comments');
     exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, comments);
   } else {
     exportSVG = buildExportSVG(svgEl, clientName, reviewLabel, null);
