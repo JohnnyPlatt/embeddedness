@@ -1460,7 +1460,11 @@ function showView(v) {
   const tabIndex = v === 'overview' ? 0 : v === 'review' ? 1 : 2;
   document.querySelectorAll('.nav-tab')[tabIndex].classList.add('active');
   if (v === 'dashboard') refreshDashClientSelect();
-  if (v === 'overview') loadOverview();
+  if (v === 'overview') {
+    ovState.allReviews = {}; // always reload fresh
+    ovState.sortedClients = [];
+    loadOverview();
+  }
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -3068,7 +3072,7 @@ async function loadOverview() {
     // Fetch all score records, get latest per client
     const enc = encodeURIComponent('NOT({Client} = "")');
     const f = encodeURIComponent(`OR({Deleted}=FALSE(), {Deleted}=BLANK())`);
-    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Created%20Time&sort[0][direction]=desc`);
     const records = data.records || [];
 
     // Build map of clientName -> latest review
