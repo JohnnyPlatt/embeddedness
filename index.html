@@ -3074,36 +3074,16 @@ async function loadOverview() {
     // Fetch all score records, get latest per client
     const enc = encodeURIComponent('NOT({Client} = "")');
     const f = encodeURIComponent(`OR({Deleted}=FALSE(), {Deleted}=BLANK())`);
-    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Review%20Date&sort[0][direction]=desc`);
+    const data = await atFetch("GET", `${SCORES_TABLE}?maxRecords=500&filterByFormula=${f}&sort[0][field]=Created%20Time&sort[0][direction]=desc`);
     const records = data.records || [];
 
     // Build map of clientName -> latest review
-    // Count answered questions to determine most complete record
-    const SCORE_FIELDS = ["BC1","BC2","V1","V2","V3","E1","E2","E3","E4","E5",
-      "A1","A2","A3","D1","D2","TH1","TH2","TH3","TH4","TH5","C1","C2","C3","C4","C5","C6"];
-    function countAnswered(fields) {
-      return SCORE_FIELDS.filter(f => fields[f] !== undefined && fields[f] !== null).length;
-    }
+    // Records sorted by Created Time desc — first occurrence per client = most recently created
     const latestMap = {};
     for (const r of records) {
       const client = r.fields.Client;
       if (!client) continue;
-      if (!latestMap[client]) {
-        latestMap[client] = r.fields;
-      } else {
-        const existing = latestMap[client];
-        const existingDate = existing["Review Date"] || '';
-        const newDate = r.fields["Review Date"] || '';
-        if (newDate > existingDate) {
-          // Newer date always wins
-          latestMap[client] = r.fields;
-        } else if (newDate === existingDate) {
-          // Same date — prefer the more complete record
-          if (countAnswered(r.fields) > countAnswered(existing)) {
-            latestMap[client] = r.fields;
-          }
-        }
-      }
+      if (!latestMap[client]) latestMap[client] = r.fields;
     }
     ovState.allReviews = latestMap;
 
