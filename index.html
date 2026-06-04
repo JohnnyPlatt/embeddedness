@@ -3122,11 +3122,7 @@ async function loadOverview() {
 
 function getOverallScore(fields) {
   if (!fields) return 0;
-  if (fields["Overall_Score"] !== undefined && fields["Overall_Score"] !== null) {
-    const v = fields["Overall_Score"];
-    // Handle both decimal (0-1) and integer (0-100) storage
-    return Math.round(v <= 1 ? v * 100 : v);
-  }
+  // Always calculate from category scores for consistency
   return calcOverallFromFields(fields);
 }
 
