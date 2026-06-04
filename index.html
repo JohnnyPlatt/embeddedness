@@ -198,16 +198,15 @@
   .prev-marker-wrap { position: relative; height: 10px; margin-top: 2px; }
   .prev-marker {
     position: absolute; transform: translateX(-50%);
-    width: 2px; height: 8px; border-radius: 1px;
-    background: var(--amber); opacity: 0.7;
+    width: 3px; height: 12px; border-radius: 2px;
+    background: var(--amber);
   }
   .prev-marker::after {
-    content: ''; position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+    content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
     width: 0; height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 4px solid var(--amber);
-    opacity: 0.7;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--amber);
   }
   .prev-descriptor {
     padding: 7px 12px; margin-bottom: 10px;
@@ -220,12 +219,13 @@
   .prev-descriptor-text { color: var(--muted); }
   .prev-descriptor-pts { color: var(--muted); font-size: 10px; font-family: var(--font-mono); margin-top: 2px; }
   .prev-change {
-    display: inline-block; margin-left: 8px;
-    font-size: 10px; font-weight: 600; font-family: var(--font-mono);
+    display: inline-flex; align-items: center; gap: 3px;
+    margin-left: 8px; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; font-family: var(--font-mono);
   }
-  .prev-change.up { color: var(--green); }
-  .prev-change.down { color: var(--red); }
-  .prev-change.same { color: var(--muted); }
+  .prev-change.up { color: #fff; background: var(--green); }
+  .prev-change.down { color: #fff; background: var(--red); }
+  .prev-change.same { color: var(--muted); background: var(--border); }
 
   /* Slider styles */
   .slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
@@ -293,7 +293,17 @@
     font-size: 12px; color: var(--muted);
   }
 
-  .nav-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-bottom: 24px; }
+  .nav-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+  .btn-save-progress {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); border-radius: 8px; padding: 9px 20px;
+    cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 500;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-save-progress:hover { border-color: var(--border-light); color: var(--text); }
+  .btn-save-progress.saving { border-color: var(--accent); color: var(--accent-light); }
+  .btn-save-progress.saved { border-color: var(--green); color: var(--green); }
+  .save-progress-area { display: flex; align-items: center; gap: 10px; }
 
   .btn { 
     font-family: var(--font-body); font-size: 14px; font-weight: 600;
@@ -713,9 +723,15 @@
             <button class="btn btn-secondary" id="btn-prev" onclick="prevCat()" style="display:none">← Back</button>
             <button class="btn btn-next" id="btn-next" onclick="nextCat()">Next →</button>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <div class="error-msg" id="submit-error"></div>
-            <button class="btn btn-primary" id="btn-submit" style="display:none" onclick="submitReview()">Submit Review</button>
+          <div class="save-progress-area">
+            <button class="btn-save-progress" id="btn-save-progress" onclick="saveProgress()">
+              <span id="save-progress-icon">💾</span>
+              <span id="save-progress-label">Save progress</span>
+            </button>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+              <div class="error-msg" id="submit-error"></div>
+              <button class="btn btn-primary" id="btn-submit" style="display:none" onclick="submitReview()">Submit Review</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1104,7 +1120,8 @@ let state = {
   clients: [],
   adminAuthed: false,
   dashReviews: [],
-  editingRecordId: null  // null = new review, string = editing existing record
+  editingRecordId: null, // null = new review, string = editing existing record
+  draftRecordId: null    // Airtable record ID for in-progress draft
 };
 
 // ── AIRTABLE API ──────────────────────────────────────────────────────────────
@@ -1446,6 +1463,90 @@ function prevCat() {
   if (idx > 0) switchCat(CATS[idx - 1]);
 }
 
+// ── SAVE PROGRESS ────────────────────────────────────────────────────────────
+// Drafts are stored in localStorage keyed by client name
+function getDraftKey(clientName) {
+  return `embeddedness_draft_${clientName}`;
+}
+
+function saveDraftLocally(clientName, csm, reviewName, answers) {
+  try {
+    localStorage.setItem(getDraftKey(clientName), JSON.stringify({
+      csm, reviewName, answers, savedAt: new Date().toISOString()
+    }));
+  } catch(e) { console.warn('Could not save draft locally:', e); }
+}
+
+function loadDraftLocally(clientName) {
+  try {
+    const raw = localStorage.getItem(getDraftKey(clientName));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function clearDraftLocally(clientName) {
+  try { localStorage.removeItem(getDraftKey(clientName)); } catch(e) {}
+}
+
+async function saveProgress() {
+  const client = document.getElementById('sel-client').value;
+  const csm = document.getElementById('inp-csm').value.trim();
+  const errEl = document.getElementById('submit-error');
+  errEl.textContent = '';
+
+  if (!client) { errEl.textContent = 'Please select a client first.'; return; }
+  if (!csm) { errEl.textContent = 'Please enter your name first.'; return; }
+
+  const btn = document.getElementById('btn-save-progress');
+  const labelEl = document.getElementById('save-progress-label');
+  const iconEl = document.getElementById('save-progress-icon');
+
+  btn.classList.add('saving');
+  labelEl.textContent = 'Saving…';
+  iconEl.textContent = '⏳';
+
+  // Save draft locally so it survives browser refresh
+  const reviewName = document.getElementById('inp-review-name').value.trim();
+  saveDraftLocally(client, csm, reviewName, state.answers);
+
+  // Also save/update in Airtable as a draft record
+  try {
+    const scores = calcAllScores(state.answers);
+    if (state.editingRecordId) {
+      await updateReview(state.editingRecordId, client, csm, reviewName, state.answers, scores);
+    } else {
+      // Check if a draft record already exists for this client+csm combo without a review date finalised
+      // We store the draft record ID in state
+      if (state.draftRecordId) {
+        await updateReview(state.draftRecordId, client, csm, reviewName, state.answers, scores);
+      } else {
+        const result = await saveReview(client, csm, reviewName, state.answers, scores);
+        if (result?.id) state.draftRecordId = result.id;
+      }
+    }
+
+    btn.classList.remove('saving');
+    btn.classList.add('saved');
+    labelEl.textContent = 'Saved ✓';
+    iconEl.textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('saved');
+      labelEl.textContent = 'Save progress';
+      iconEl.textContent = '💾';
+    }, 2500);
+  } catch(e) {
+    // Fall back to local-only save
+    btn.classList.remove('saving');
+    labelEl.textContent = 'Saved locally ✓';
+    iconEl.textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('saved');
+      labelEl.textContent = 'Save progress';
+      iconEl.textContent = '💾';
+    }, 2500);
+  }
+}
+
 // ── EDIT / DELETE ─────────────────────────────────────────────────────────────
 function startEditReview(e, idx) {
   e.preventDefault(); e.stopPropagation();
@@ -1536,6 +1637,8 @@ async function submitReview() {
 
     const wasEditing = !!state.editingRecordId;
     state.editingRecordId = null;
+    state.draftRecordId = null;
+    clearDraftLocally(client);
     document.getElementById('edit-banner').style.display = 'none';
     document.getElementById('review-layout').style.display = 'none';
     const ss = document.getElementById('success-state');
@@ -1553,6 +1656,7 @@ function resetReview() {
   state.prevAnswers = {};
   state.activeCat = CATS[0];
   state.editingRecordId = null;
+  state.draftRecordId = null;
   document.getElementById('review-layout').style.display = 'flex';
   document.getElementById('success-state').style.display = 'none';
   document.getElementById('edit-banner').style.display = 'none';
@@ -1592,7 +1696,21 @@ async function onClientChange() {
     console.warn("Could not load previous answers:", e.message);
   }
 
+  // Check for a local draft for this client
+  if (!state.editingRecordId) {
+    const draft = loadDraftLocally(clientName);
+    if (draft && Object.keys(draft.answers || {}).length > 0) {
+      const answeredCount = Object.keys(draft.answers).filter(k => !k.endsWith('_c')).length;
+      if (answeredCount > 0 && confirm(`You have a saved draft for ${clientName} with ${answeredCount} questions answered (saved ${new Date(draft.savedAt).toLocaleDateString('en-GB')}). Load it?`)) {
+        state.answers = draft.answers;
+        if (draft.csm) document.getElementById('inp-csm').value = draft.csm;
+        if (draft.reviewName) document.getElementById('inp-review-name').value = draft.reviewName;
+      }
+    }
+  }
+
   // Re-render questions to show previous markers
+  buildSidebar();
   renderQuestions();
 }
 
