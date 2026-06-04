@@ -3128,9 +3128,12 @@ function getOverallScore(fields) {
   if (!fields) return 0;
   // Use stored Overall_Score if available (stored as 0-100 integer)
   if (fields["Overall_Score"] !== undefined && fields["Overall_Score"] !== null) {
+    console.log('getOverallScore: using stored value', fields["Overall_Score"], 'for', fields["Client"]);
     return Math.round(fields["Overall_Score"]);
   }
-  return calcOverallFromFields(fields);
+  const calc = calcOverallFromFields(fields);
+  console.log('getOverallScore: calculated', calc, 'for', fields["Client"], 'BC_Score=', fields["BC_Score"]);
+  return calc;
 }
 
 function updateSummaryCards() {
