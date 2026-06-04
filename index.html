@@ -3152,10 +3152,13 @@ function makeScoreRingSVG(pct) {
   const dash = pct >= 100 ? circ + 1 : (pct / 100) * circ;
   const color = pct >= 75 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : pct > 0 ? 'var(--red)' : 'var(--border)';
   const display = pct > 0 ? pct : '—';
+  const ringEl = pct <= 0 ? '' : pct >= 100
+    ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3"/>`
+    : `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3"
+        stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>`;
   return `<svg width="48" height="48" viewBox="0 0 48 48">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="3"/>
-    ${pct > 0 ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3"
-      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round"/>` : ''}
+    ${ringEl}
     <text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle"
       font-size="${pct > 0 ? '11' : '10'}" font-weight="600" fill="${color}"
       font-family="'DM Mono',monospace">${display}</text>
