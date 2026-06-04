@@ -1795,6 +1795,7 @@ async function saveProgress() {
         const result = await saveReview(client, csm, reviewName, state.answers, scores);
         if (result?.id) state.draftRecordId = result.id;
       }
+      ovState.allReviews = {}; // force Overview to reload
     }
 
     btn.classList.remove('saving');
@@ -1945,6 +1946,7 @@ Click Cancel to go back and complete them.`)) {
     state.editingRecordId = null;
     state.draftRecordId = null;
     clearDraftLocally(client);
+    ovState.allReviews = {}; // force Overview to reload on next visit
     document.getElementById('edit-banner').style.display = 'none';
     document.getElementById('review-layout').style.display = 'none';
     const ss = document.getElementById('success-state');
