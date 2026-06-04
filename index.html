@@ -884,6 +884,10 @@
           <div class="sidebar-progress-label">Progress</div>
           <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
           <div class="progress-count" id="progress-count">0 / 26</div>
+          <div id="sidebar-overall" style="display:none;margin-top:8px;text-align:center">
+            <div style="font-size:10px;color:var(--muted);font-weight:500;margin-bottom:2px">Overall</div>
+            <div id="sidebar-overall-score" style="font-size:20px;font-weight:700;font-family:var(--font-mono)"></div>
+          </div>
         </div>
         <div class="sidebar-cats" id="sidebar-cats"></div>
       </div>
@@ -1367,6 +1371,7 @@ async function saveReview(client, csm, reviewName, answers, scores) {
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
+  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
   return atFetch("POST", SCORES_TABLE, { records: [{ fields }] });
 }
 
@@ -1390,6 +1395,7 @@ async function updateReview(recordId, client, csm, reviewName, answers, scores) 
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
+  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
   return atFetch("PATCH", `${SCORES_TABLE}/${recordId}`, { fields });
 }
 
@@ -1408,7 +1414,22 @@ function calcScore(cat, answers) {
 function calcAllScores(answers) {
   const s = {};
   CATS.forEach(c => { s[c] = calcScore(c, answers); });
+  // Overall = (BC×3 + Vol + Eng + Adv + Diff + TH + Con) / 8
+  const bc = s["Business Case"] || 0;
+  const overall = (bc*3 + (s["Journey Volumes"]||0) + (s["Engagement"]||0) +
+    (s["Advocacy"]||0) + (s["Differentiators"]||0) + (s["Technical Health"]||0) +
+    (s["Contractual"]||0)) / 8;
+  s._overall = Math.round(overall * 100) / 100;
   return s;
+}
+
+function calcOverallFromFields(fields) {
+  if (!fields) return 0;
+  const bc = fields["BC_Score"] || 0;
+  const overall = (bc*3 + (fields["Vol_Score"]||0) + (fields["Eng_Score"]||0) +
+    (fields["Adv_Score"]||0) + (fields["Diff_Score"]||0) + (fields["TH_Score"]||0) +
+    (fields["Con_Score"]||0)) / 8;
+  return Math.round(overall * 100);
 }
 
 function scoreColor(pct) {
@@ -1440,6 +1461,7 @@ function buildSidebar() {
     const sc = Math.round(scores[cat] * 100);
     const done = QUESTIONS[cat].questions.filter(q => state.answers[q.id] !== undefined).length;
     const total = QUESTIONS[cat].questions.length;
+    const overallSc = Math.round((scores._overall || 0) * 100);
     btn.innerHTML = `<div class="cat-btn-row">
       <span class="cat-btn-name">${cat}</span>
       ${done > 0 ? `<span class="cat-score" style="color:${scoreColor(sc)}">${sc}%</span>` : ''}
@@ -1455,6 +1477,21 @@ function updateProgress() {
   const answered = CATS.reduce((a,c) => a + QUESTIONS[c].questions.filter(q => state.answers[q.id] !== undefined).length, 0);
   document.getElementById('progress-fill').style.width = (answered / TOTAL_QS * 100) + '%';
   document.getElementById('progress-count').textContent = `${answered} / ${TOTAL_QS}`;
+
+  // Show overall score if any answers exist
+  const scores = calcAllScores(state.answers);
+  const overallPct = Math.round((scores._overall || 0) * 100);
+  const overallEl = document.getElementById('sidebar-overall');
+  const overallScore = document.getElementById('sidebar-overall-score');
+  if (overallEl && overallScore) {
+    if (answered > 0) {
+      overallEl.style.display = 'block';
+      overallScore.textContent = overallPct + '%';
+      overallScore.style.color = scoreColor(overallPct);
+    } else {
+      overallEl.style.display = 'none';
+    }
+  }
 }
 
 function switchCat(cat) {
@@ -2254,8 +2291,16 @@ function renderDashboard() {
   const scores = {};
   Object.keys(CAT_SCORE_FIELDS).forEach(cat => { scores[cat] = f[CAT_SCORE_FIELDS[cat]] || 0; });
 
-  // Score cards
-  let scoreCardsHTML = Object.keys(CAT_SCORE_FIELDS).map(cat => {
+  // Score cards — overall first, then categories
+  const overallPct = f["Overall_Score"] !== undefined
+    ? Math.round(f["Overall_Score"] * 100)
+    : calcOverallFromFields(f);
+  const overallCard = `<div class="score-card" style="border-color:${scoreColor(overallPct)};border-width:2px">
+    <div class="score-value" style="color:${scoreColor(overallPct)};font-size:32px">${overallPct}%</div>
+    <div class="score-label" style="font-weight:600;color:var(--text)">Overall</div>
+  </div>`;
+
+  let scoreCardsHTML = overallCard + Object.keys(CAT_SCORE_FIELDS).map(cat => {
     const pct = Math.round((f[CAT_SCORE_FIELDS[cat]] || 0) * 100);
     return `<div class="score-card">
       <div class="score-value" style="color:${scoreColor(pct)}">${pct}%</div>
@@ -3002,8 +3047,11 @@ async function loadOverview() {
 
 function getOverallScore(fields) {
   if (!fields) return 0;
-  const scores = Object.values(CAT_SCORE_FIELDS).map(f => fields[f] || 0);
-  return Math.round(scores.reduce((a,b) => a+b, 0) / scores.length * 100);
+  // Use stored Overall_Score if available, otherwise calculate
+  if (fields["Overall_Score"] !== undefined && fields["Overall_Score"] !== null) {
+    return Math.round(fields["Overall_Score"] * 100);
+  }
+  return calcOverallFromFields(fields);
 }
 
 function updateSummaryCards() {
