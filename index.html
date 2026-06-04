@@ -189,6 +189,19 @@
     transition: border-color 0.2s;
   }
   .q-card.answered { border-color: rgba(54,148,252,0.25); }
+  .q-card.unanswered-highlight {
+    border-color: rgba(217,119,6,0.4) !important;
+    background: rgba(217,119,6,0.03);
+  }
+  .q-card.unanswered-highlight .q-label::after {
+    content: ' ← required';
+    color: var(--amber);
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .cat-btn.has-unanswered .cat-btn-name { color: var(--amber) !important; }
+  .cat-btn.has-unanswered .cat-progress { color: var(--amber); }
 
   .q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .q-label { color: var(--text); font-size: 14px; font-weight: 600; flex: 1; }
@@ -1323,7 +1336,8 @@ let state = {
   adminAuthed: false,
   dashReviews: [],
   editingRecordId: null, // null = new review, string = editing existing record
-  draftRecordId: null    // Airtable record ID for in-progress draft
+  draftRecordId: null,   // Airtable record ID for in-progress draft
+  _showUnanswered: false // flag to highlight unanswered questions
 };
 
 // ── AIRTABLE API ──────────────────────────────────────────────────────────────
@@ -1371,7 +1385,7 @@ async function saveReview(client, csm, reviewName, answers, scores) {
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
-  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
+  if (scores._overall !== undefined) fields["Overall_Score"] = Math.round(scores._overall * 100);
   return atFetch("POST", SCORES_TABLE, { records: [{ fields }] });
 }
 
@@ -1395,7 +1409,7 @@ async function updateReview(recordId, client, csm, reviewName, answers, scores) 
     }
     if (scores[cat] !== undefined) fields[CAT_SCORE_FIELDS[cat]] = scores[cat];
   }
-  if (scores._overall !== undefined) fields["Overall_Score"] = scores._overall;
+  if (scores._overall !== undefined) fields["Overall_Score"] = Math.round(scores._overall * 100);
   return atFetch("PATCH", `${SCORES_TABLE}/${recordId}`, { fields });
 }
 
@@ -1462,9 +1476,13 @@ function buildSidebar() {
     const done = QUESTIONS[cat].questions.filter(q => state.answers[q.id] !== undefined).length;
     const total = QUESTIONS[cat].questions.length;
     const overallSc = Math.round((scores._overall || 0) * 100);
+    const hasUnanswered = state._showUnanswered && done < total;
+    if (hasUnanswered) btn.classList.add('has-unanswered');
+    else btn.classList.remove('has-unanswered');
     btn.innerHTML = `<div class="cat-btn-row">
       <span class="cat-btn-name">${cat}</span>
       ${done > 0 ? `<span class="cat-score" style="color:${scoreColor(sc)}">${sc}%</span>` : ''}
+      ${hasUnanswered ? `<span style="color:var(--amber);font-size:10px;font-weight:700">!</span>` : ''}
     </div>
     <div class="cat-progress">${done}/${total} answered</div>`;
     btn.onclick = () => switchCat(cat);
@@ -1499,6 +1517,9 @@ function switchCat(cat) {
   buildSidebar();
   renderQuestions();
   updateNavButtons();
+  // Scroll main panel to top
+  const panel = document.getElementById('main-panel');
+  if (panel) panel.scrollTop = 0;
 }
 
 // ── QUESTIONS ─────────────────────────────────────────────────────────────────
@@ -1523,7 +1544,8 @@ function renderQuestions() {
   qs.forEach(q => {
     const card = document.createElement('div');
     const hasAnswer = state.answers[q.id] !== undefined;
-    card.className = 'q-card' + (hasAnswer ? ' answered' : '');
+    const needsHighlight = state._showUnanswered && !hasAnswer;
+    card.className = 'q-card' + (hasAnswer ? ' answered' : '') + (needsHighlight ? ' unanswered-highlight' : '');
     card.id = 'qcard-' + q.id;
 
     const max = q.options.length;
@@ -1656,8 +1678,18 @@ function onSliderCommit(qid) {
   const slider = document.getElementById('slider-' + qid);
   const val = parseInt(slider.value);
   state.answers[qid] = val;
-  document.getElementById('qcard-' + qid).classList.add('answered');
+  const card = document.getElementById('qcard-' + qid);
+  card.classList.add('answered');
+  card.classList.remove('unanswered-highlight');
   buildSidebar();
+  // Clear error message if all answered
+  const stillMissing = CATS.reduce((a,c) => a + QUESTIONS[c].questions.filter(q => state.answers[q.id] === undefined).length, 0);
+  if (stillMissing === 0) {
+    state._showUnanswered = false;
+    const errEl = document.getElementById('submit-error');
+    if (errEl) errEl.textContent = '';
+    buildSidebar();
+  }
 }
 
 function findQuestion(qid) {
@@ -1878,7 +1910,23 @@ async function submitReview() {
   if (!csm) { errEl.textContent = 'Please enter your name.'; return; }
 
   const answered = CATS.reduce((a,c) => a + QUESTIONS[c].questions.filter(q => state.answers[q.id] !== undefined).length, 0);
-  if (answered < TOTAL_QS && !confirm(`${TOTAL_QS - answered} question(s) unanswered. Submit anyway?`)) return;
+  if (answered < TOTAL_QS) {
+    const missing = TOTAL_QS - answered;
+    // Find first category with unanswered questions and jump to it
+    const firstIncomplete = CATS.find(cat =>
+      QUESTIONS[cat].questions.some(q => state.answers[q.id] === undefined)
+    );
+    if (!confirm(`${missing} question${missing > 1 ? 's' : ''} still unanswered. Submit anyway?
+
+Click Cancel to go back and complete them.`)) {
+      // Highlight unanswered and jump to first incomplete category
+      state._showUnanswered = true;
+      if (firstIncomplete) switchCat(firstIncomplete);
+      else { buildSidebar(); renderQuestions(); }
+      errEl.textContent = `${missing} unanswered question${missing > 1 ? 's' : ''} highlighted in amber below.`;
+      return;
+    }
+  }
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.textContent = state.editingRecordId ? 'Saving...' : 'Submitting...';
@@ -1915,6 +1963,7 @@ function resetReview() {
   state.activeCat = CATS[0];
   state.editingRecordId = null;
   state.draftRecordId = null;
+  state._showUnanswered = false;
   startState.selectedClient = null;
 
   // Return to start screen
@@ -2293,7 +2342,7 @@ function renderDashboard() {
 
   // Score cards — overall first, then categories
   const overallPct = f["Overall_Score"] !== undefined
-    ? Math.round(f["Overall_Score"] * 100)
+    ? Math.round(f["Overall_Score"])
     : calcOverallFromFields(f);
   const overallCard = `<div class="score-card" style="border-color:${scoreColor(overallPct)};border-width:2px">
     <div class="score-value" style="color:${scoreColor(overallPct)};font-size:32px">${overallPct}%</div>
@@ -3047,9 +3096,9 @@ async function loadOverview() {
 
 function getOverallScore(fields) {
   if (!fields) return 0;
-  // Use stored Overall_Score if available, otherwise calculate
+  // Use stored Overall_Score if available (stored as 0-100 integer)
   if (fields["Overall_Score"] !== undefined && fields["Overall_Score"] !== null) {
-    return Math.round(fields["Overall_Score"] * 100);
+    return Math.round(fields["Overall_Score"]);
   }
   return calcOverallFromFields(fields);
 }
