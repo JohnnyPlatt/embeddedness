@@ -3025,11 +3025,14 @@ function exportOverviewPDF(view) {
     @media print {
       .header, .nav-tabs, .btn-admin, .ov-controls, .dashboard-controls,
       .review-check-panel, #dash-export-btns, .btn-export,
-      #view-review, #view-dashboard, #view-overview .ov-list-view,
       .btn-update, .btn-remove { display: none !important; }
-      body { background: white !important; }
-      .score-card, .ov-client-row, .ov-heatmap-section { break-inside: avoid; }
+      #view-review, #view-overview { display: none !important; }
+      body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .app { padding-top: 0 !important; }
+      .dashboard-panel { padding: 16px !important; }
+      .score-card, .chart-card, .detail-card, .dash-radar-row { break-inside: avoid; }
+      .score-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+      .score-card { flex: 1 1 120px; }
     }`;
 
   // Show the right view
