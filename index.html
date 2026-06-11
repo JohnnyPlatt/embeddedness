@@ -2938,7 +2938,8 @@ function buildExportSVG(radarSvgEl, clientName, reviewLabel, catComments) {
   const W = 1024, H = 768;
   const headerH = 56;
   const padding = 24;
-  const radarSize = 380;
+  // When no comments, use a much larger radar to fill the available space
+  const radarSize = catComments ? 380 : Math.min(W - padding * 2, H - headerH - padding * 2);
   const radarX = (W - radarSize) / 2; // centre radar
   const commentColW = (radarX - padding * 2);
   const lineH = 15;
